@@ -202,6 +202,15 @@
 					</a>
 				{{end}}
 
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+					<a href="{{.RepoLink}}/dataset" class="{{if .IsDatasetPage}}active {{end}}item">
+						{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
+						{{if .Repository.NumOpenProjects}}
+							<span class="ui small label">{{CountFmt .Repository.NumOpenProjects}}</span>
+						{{end}}
+					</a>
+				{{end}}
+
 				{{if and (.Permission.CanRead $.UnitTypeReleases) (not .IsEmptyRepo)}}
 				<a class="{{if or .PageIsReleaseList .PageIsTagList}}active {{end}}item" href="{{.RepoLink}}/releases">
 					{{svg "octicon-tag"}} {{ctx.Locale.Tr "repo.releases"}}
