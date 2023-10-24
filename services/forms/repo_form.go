@@ -539,6 +539,15 @@ type EditProjectBoardForm struct {
 	Color   string `binding:"MaxSize(7)"`
 }
 
+// Datasets Form
+// Sorry, No ASCII Art here
+
+// CreateDatasetForm form for creating dataset
+type CreateDatasetForm struct {
+	Name string `binding:"Required;MaxSize(100)"`
+	Url  string
+}
+
 //    _____  .__.__                   __
 //   /     \ |__|  |   ____   _______/  |_  ____   ____   ____
 //  /  \ /  \|  |  | _/ __ \ /  ___/\   __\/  _ \ /    \_/ __ \

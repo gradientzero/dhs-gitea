@@ -1,0 +1,74 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository projects edit-project new milestone">
+	{{template "repo/header" .}}
+	<div class="ui container">
+
+		<!-- Start of Dataset page -->
+
+		<h2 class="ui dividing header gt-df gt-sb">
+			<div>
+				{{ctx.Locale.Tr "repo.datasets.list"}}
+				<div class="sub header">{{ctx.Locale.Tr "repo.datasets.list_subheader"}}</div>
+			</div>
+			<div class="gt-p-3">
+				<a class="ui small primary button gt-text-right" href="{{.Link}}">Create</a>
+			</div>
+		</h2>
+
+		{{template "base/alert" .}}
+
+		{{/* FIXME: Don't know how to show message yet, that is temp solution*/}}
+		{{if .Message}}
+		<div class="ui info message flash-message flash-info">
+			<p>{{.Message | Str2html}}</p>
+		</div>
+		{{end}}
+
+		{{if .RemoteList }}
+		<div class="ui attached table segment">
+			<table class="ui very basic striped fixed table single line">
+				<thead>
+					<tr>
+						<th class="center aligned">Date Created</th>
+						<th class="center aligned">Author</th>
+						<th class="center aligned">Name</th>
+						<th class="center aligned">Url</th>
+						<th />
+					</tr>
+				</thead>
+				<tbody>
+				{{range $idx, $remote := .RemoteList}}
+				<tr>
+					<td class="center aligned">
+						{{ DateTime "long" .DateAdded }}
+					</td>
+					<td class="center aligned">
+						{{ .AuthorName }}
+					</td>
+					<td class="center aligned">
+						{{ .Name }}
+					</td>
+					<td class="center aligned">
+						{{ .Url }}
+					</td>
+					<td class="gt-text-right">
+						<a href="{{$.RemoteLink}}/{{.Name}}/sync" class="ui small primary button">{{svg "octicon-sync"}}</a>
+						<a href="{{$.RemoteLink}}/{{.Name}}/delete" class="ui small secondary button">{{svg "octicon-trash"}}</a>
+					</td>
+				</tr>
+				{{end}}
+				</tbody>
+			</table>
+		</div>
+		{{ else }}
+		<div class="empty center aligned">
+			{{ svg "octicon-server" 48}}
+			<h2>There is no remotes add in this repo.</h2>
+			<p>Can add new remote server by using form below.</p>
+		</div>
+		{{end}}
+		<!-- End of Dataset page -->
+	</div>
+
+</div>
+{{template "base/footer" .}}

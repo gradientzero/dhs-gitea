@@ -1306,31 +1306,19 @@ func registerRoutes(m *web.Route) {
 			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
 		}, reqRepoProjectsReader, repo.MustEnableProjects)
 
-		m.Group("/dataset", func() {
-			m.Get("", repo.Dataset)
-			// m.Get("/{id}", repo.ViewProject)
-			// m.Group("", func() { //nolint:dupl
-			// 	m.Get("/new", repo.RenderNewProject)
-			// 	m.Post("/new", web.Bind(forms.CreateProjectForm{}), repo.NewProjectPost)
-			// 	m.Group("/{id}", func() {
-			// 		m.Post("", web.Bind(forms.EditProjectBoardForm{}), repo.AddBoardToProjectPost)
-			// 		m.Post("/delete", repo.DeleteProject)
-
-			// 		m.Get("/edit", repo.RenderEditProject)
-			// 		m.Post("/edit", web.Bind(forms.CreateProjectForm{}), repo.EditProjectPost)
-			// 		m.Post("/{action:open|close}", repo.ChangeProjectStatus)
-
-			// 		m.Group("/{boardID}", func() {
-			// 			m.Put("", web.Bind(forms.EditProjectBoardForm{}), repo.EditProjectBoard)
-			// 			m.Delete("", repo.DeleteProjectBoard)
-			// 			m.Post("/default", repo.SetDefaultProjectBoard)
-			// 			m.Post("/unsetdefault", repo.UnSetDefaultProjectBoard)
-
-			// 			m.Post("/move", repo.MoveIssues)
-			// 		})
-			// 	})
-			// }, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
-		}, reqRepoProjectsReader, repo.MustEnableProjects)
+		m.Group("/datasets", func() {
+			m.Get("", repo.Datasets) // list dataset
+			m.Group("", func() {
+				m.Get("/new", repo.NewDatasetGet)
+				m.Post("/new", web.Bind(forms.CreateDatasetForm{}), repo.NewDatasetPost)
+				m.Group("/remote/{name}", func() {
+					m.Get("/sync", repo.SyncDataset)
+					m.Get("/delete", repo.DeleteDatasetGet)
+					m.Post("/delete", repo.DeleteDatasetPost)
+				})
+			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission
+		}, context.RepoRef(), canEnableEditor,
+			reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
 
 		m.Group("/actions", func() {
 			m.Get("", actions.List)

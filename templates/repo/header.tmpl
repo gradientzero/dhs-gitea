@@ -203,7 +203,7 @@
 				{{end}}
 
 				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
-					<a href="{{.RepoLink}}/dataset" class="{{if .IsDatasetPage}}active {{end}}item">
+					<a href="{{.RepoLink}}/datasets" class="{{if .IsDatasetPage}}active {{end}}item">
 						{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
 						{{if .Repository.NumOpenProjects}}
 							<span class="ui small label">{{CountFmt .Repository.NumOpenProjects}}</span>
