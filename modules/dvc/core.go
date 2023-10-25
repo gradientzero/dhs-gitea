@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"os"
 	"os/exec"
@@ -21,6 +22,7 @@ type Remote struct {
 	Url        string
 	AuthorName string
 	DateAdded  time.Time
+	Link       string
 }
 
 type RemoteGitBlame struct {
@@ -28,11 +30,16 @@ type RemoteGitBlame struct {
 	Date       time.Time
 }
 
+func ValidateRemoteName(name string) error {
+	if strings.Contains(name, " ") {
+		return errors.New("remote name can't have space")
+	}
+	return nil
+}
+
 func RemoteAdd(ctx *context.Context, remote Remote) (err error) {
 
-	repoPath := ctx.Repo.GitRepo.Path
-
-	return executeTempRepo(repoPath, func(tempRepoPath string, repo *git.Repository) error {
+	return executeTempRepo(ctx, func(tempRepoPath string, repo *git.Repository) error {
 
 		err = DvcInit(tempRepoPath)
 		if err != nil {
@@ -81,9 +88,8 @@ func RemoteAdd(ctx *context.Context, remote Remote) (err error) {
 }
 
 func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
-	repoPath := ctx.Repo.GitRepo.Path
 
-	err = executeTempRepo(repoPath, func(tempRepoPath string, repository *git.Repository) error {
+	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "remote", "list")
 		cmd.Dir = tempRepoPath
 		output, err := cmd.CombinedOutput()
@@ -110,6 +116,16 @@ func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
 	return remotes, err
 }
 
+func changeFromProtocolToLink(protocol string) string {
+	split := strings.Split(protocol, "://")
+	if len(split) >= 2 {
+		if split[0] == "gdrive" {
+			return strings.Join([]string{"https://drive.google.com/drive/folders", split[1]}, "/")
+		}
+	}
+	return protocol
+}
+
 func ParseRemote(output string) (remotes []Remote) {
 	re := regexp.MustCompile("\\s")
 
@@ -117,7 +133,11 @@ func ParseRemote(output string) (remotes []Remote) {
 	for sc.Scan() {
 		split := re.Split(strings.TrimSpace(sc.Text()), -1)
 		if len(split) == 2 {
-			remotes = append(remotes, Remote{Name: split[0], Url: split[1]})
+			remotes = append(remotes, Remote{
+				Name: split[0],
+				Url:  split[1],
+				Link: changeFromProtocolToLink(split[1]),
+			})
 		}
 	}
 	return remotes
@@ -161,9 +181,7 @@ func RemoteCreatedDate(repo *git.Repository) (m map[string]RemoteGitBlame, err e
 
 func RemotePull(ctx *context.Context, remote Remote) (output string, err error) {
 
-	repoPath := ctx.Repo.GitRepo.Path
-
-	err = executeTempRepo(repoPath, func(tempRepoPath string, repository *git.Repository) error {
+	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "pull", "--remote", remote.Name)
 		cmd.Dir = tempRepoPath
 		out, err := cmd.CombinedOutput()
@@ -181,9 +199,8 @@ func RemotePull(ctx *context.Context, remote Remote) (output string, err error) 
 }
 
 func RemoteDelete(ctx *context.Context, remote Remote) (output string, err error) {
-	repoPath := ctx.Repo.GitRepo.Path
 
-	err = executeTempRepo(repoPath, func(tempRepoPath string, repo *git.Repository) error {
+	err = executeTempRepo(ctx, func(tempRepoPath string, repo *git.Repository) error {
 		cmd := exec.Command("dvc", "remote", "remove", remote.Name)
 		cmd.Dir = tempRepoPath
 		out, err := cmd.CombinedOutput()
@@ -229,7 +246,11 @@ func RemoteDelete(ctx *context.Context, remote Remote) (output string, err error
 
 // execute code withing given repo,
 // execute function accept tempRepoPath, and gitRepository
-func executeTempRepo(repoPath string, execute func(string, *git.Repository) error) error {
+func executeTempRepo(ctx *context.Context, execute func(string, *git.Repository) error) error {
+
+	repoPath := ctx.Repo.GitRepo.Path
+	branchName := ctx.Repo.BranchName
+
 	tempRepoPath, err := repo_module.CreateTemporaryPath("dataset")
 	if err != nil {
 		log.Error("error: %v", err)
@@ -242,9 +263,12 @@ func executeTempRepo(repoPath string, execute func(string, *git.Repository) erro
 		}
 	}()
 
-	log.Info("git clone %s %s", repoPath, tempRepoPath)
+	log.Info("git clone %s %s %s", repoPath, branchName, tempRepoPath)
 	repo, err := git.PlainClone(tempRepoPath, false, &git.CloneOptions{
 		URL: repoPath,
+		// Ref: https://github.com/src-d/go-git/issues/553
+		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branchName)),
+		SingleBranch:  true,
 	})
 
 	if err != nil {

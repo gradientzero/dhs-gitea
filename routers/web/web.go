@@ -1308,7 +1308,8 @@ func registerRoutes(m *web.Route) {
 
 		m.Group("/datasets", func() {
 			m.Get("", repo.Datasets) // list dataset
-			m.Group("", func() {
+			// comment out for new and delete repo
+			/*m.Group("", func() {
 				m.Get("/new", repo.NewDatasetGet)
 				m.Post("/new", web.Bind(forms.CreateDatasetForm{}), repo.NewDatasetPost)
 				m.Group("/remote/{name}", func() {
@@ -1316,7 +1317,7 @@ func registerRoutes(m *web.Route) {
 					m.Get("/delete", repo.DeleteDatasetGet)
 					m.Post("/delete", repo.DeleteDatasetPost)
 				})
-			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission
+			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission*/
 		}, context.RepoRef(), canEnableEditor,
 			reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
 

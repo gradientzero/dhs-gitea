@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -47,12 +48,25 @@ func Datasets(ctx *context.Context) {
 	//	ctx.Data["CanWriteProjects"] = ctx.Repo.Permission.CanWrite(unit.TypeProjects) @todo check permission handling
 	ctx.Data["Link"] = ctx.Repo.Repository.Link() + "/datasets/new"
 	ctx.Data["RemoteLink"] = ctx.Repo.Repository.Link() + "/datasets/remote"
+	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
+
+	branches, err := findBranches(ctx)
+
+	branch := ctx.Req.URL.Query().Get("branch")
+	if branch != "" && slices.Contains(branches, branch) {
+		ctx.Repo.BranchName = branch
+	} else {
+		branch = ctx.Repo.BranchName // reset default branch name
+	}
 
 	remotes, err := dvc.RemoteList(ctx)
 	if err != nil {
 		log.Error("err when remote list: %v", err)
+		errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
+		ctx.Data["Message"] = errorMsg
 	}
-
+	ctx.Data["Branches"] = branches
+	ctx.Data["Branch"] = branch
 	ctx.Data["RemoteList"] = remotes
 
 	ctx.HTML(http.StatusOK, tplDatasetsList)
@@ -62,6 +76,7 @@ func NewDatasetGet(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.datasets.new")
 	ctx.Data["Link"] = ctx.Repo.Repository.Link() + "/datasets/new"
 	ctx.Data["CancelLink"] = ctx.Repo.Repository.Link() + "/datasets"
+	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
 
 	ctx.HTML(http.StatusOK, tplDatasetsNew)
 }
@@ -83,7 +98,16 @@ func NewDatasetPost(ctx *context.Context) {
 		return
 	}
 
-	err := dvc.RemoteAdd(ctx, dvc.Remote{
+	err := dvc.ValidateRemoteName(form.Name)
+
+	if err != nil {
+		errorMsg := fmt.Sprintf("error occured when add remote: %v", err)
+		ctx.Flash.Error(errorMsg)
+		ctx.Redirect(ctx.Repo.RepoLink + "/datasets")
+		return
+	}
+
+	err = dvc.RemoteAdd(ctx, dvc.Remote{
 		Name: form.Name,
 		Url:  form.Url,
 	})
@@ -124,6 +148,8 @@ func writeToRepo(ctx *context.Context, filename string, text string, commitMessa
 func RenderNewDataset(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.datasets.new")
 	ctx.Data["CancelLink"] = ctx.Repo.Repository.Link() + "/datasets"
+	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
+
 	ctx.HTML(http.StatusOK, tplDatasetsList)
 }
 
@@ -192,6 +218,7 @@ func DeleteDatasetGet(ctx *context.Context) {
 	ctx.Data["Name"] = name
 	ctx.Data["Link"] = ctx.Repo.Repository.Link() + "/datasets/remote/" + name + "/delete"
 	ctx.Data["CancelLink"] = ctx.Repo.Repository.Link() + "/datasets"
+	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
 
 	ctx.HTML(http.StatusOK, tplDatasetsDelete)
 }
@@ -211,4 +238,17 @@ func DeleteDatasetPost(ctx *context.Context) {
 	// TODO: need to extract remote repo credential to access pull
 	//ctx.Flash.Success(ctx.Tr("repo.datasets.add_success", name))
 	ctx.Redirect(ctx.Repo.RepoLink + "/datasets")
+}
+
+func findBranches(ctx *context.Context) ([]string, error) {
+	var branches []string
+	brs, _, err := ctx.Repo.GitRepo.GetBranches(0, 10)
+	if err != nil {
+		return branches, err
+	}
+
+	for _, v := range brs {
+		branches = append(branches, v.Name)
+	}
+	return branches, nil
 }

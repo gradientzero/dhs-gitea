@@ -10,8 +10,16 @@
 				{{ctx.Locale.Tr "repo.datasets.list"}}
 				<div class="sub header">{{ctx.Locale.Tr "repo.datasets.list_subheader"}}</div>
 			</div>
+{{/*			Comment out for Create Form */}}
+{{/*			<div class="gt-p-3">*/}}
+{{/*				<a class="ui small primary button gt-text-right" href="{{.Link}}">Create</a>*/}}
+{{/*			</div>*/}}
 			<div class="gt-p-3">
-				<a class="ui small primary button gt-text-right" href="{{.Link}}">Create</a>
+				<select id="dataset-branch" class="ui fluid dropdown" >
+					{{range $idx, $branch := .Branches}}
+					<option value="{{.}}" {{if eq $.Branch .}}selected{{end}}>{{.}}</option>
+					{{end}}
+				</select>
 			</div>
 		</h2>
 
@@ -24,17 +32,18 @@
 		</div>
 		{{end}}
 
+		{{- /*gotype: code.gitea.io/gitea/modules/dvc.Remote*/ -}}
 		{{if .RemoteList }}
 		<div class="ui attached table segment">
 			<table class="ui very basic striped fixed table single line">
 				<thead>
-					<tr>
-						<th class="center aligned">Date Created</th>
-						<th class="center aligned">Author</th>
-						<th class="center aligned">Name</th>
-						<th class="center aligned">Url</th>
-						<th />
-					</tr>
+				<tr>
+					<th class="center aligned">Date Created</th>
+					<th class="center aligned">Author</th>
+					<th class="center aligned">Name</th>
+					<th class="center aligned">Url</th>
+					<th/>
+				</tr>
 				</thead>
 				<tbody>
 				{{range $idx, $remote := .RemoteList}}
@@ -49,11 +58,13 @@
 						{{ .Name }}
 					</td>
 					<td class="center aligned">
-						{{ .Url }}
+						<a href="{{ .Link }}" target="_blank">{{ .Url }}</a>
 					</td>
 					<td class="gt-text-right">
 						<a href="{{$.RemoteLink}}/{{.Name}}/sync" class="ui small primary button">{{svg "octicon-sync"}}</a>
-						<a href="{{$.RemoteLink}}/{{.Name}}/delete" class="ui small secondary button">{{svg "octicon-trash"}}</a>
+
+						{{/* Comment out for delete remote icon */}}
+						{{/* <a href="{{$.RemoteLink}}/{{.Name}}/delete" class="ui small secondary button">{{svg "octicon-trash"}}</a>*/}}
 					</td>
 				</tr>
 				{{end}}

@@ -3,11 +3,8 @@ package dvc
 import (
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
-	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
 	"os"
-	"os/exec"
 	"regexp"
 	"testing"
 )
@@ -50,7 +47,7 @@ func TestLocalCopy(t *testing.T) {
 	fmt.Println(output)
 }*/
 
-func TestGitBlame(t *testing.T) {
+/*func TestGitBlame(t *testing.T) {
 	url := "/home/lin/Desktop/btrs/dhs-gitea/data/gitea-repositories/adminadmin/hello.git"
 
 	executeTempRepo(url, func(tempRepo string, repo *git.Repository) (err error) {
@@ -59,7 +56,7 @@ func TestGitBlame(t *testing.T) {
 		fmt.Println(m)
 		return err
 	})
-}
+}*/
 
 func TestRegexExtract(t *testing.T) {
 	data := `['remote "test"']`
@@ -80,7 +77,7 @@ func TestSplit(t *testing.T) {
 	fmt.Println(remotes)
 }
 
-func TestDvcInit(t *testing.T) {
+/*func TestDvcInit(t *testing.T) {
 	url := "/home/lin/Desktop/btrs/dhs-gitea/data/gitea-repositories/adminadmin/second-repo.git"
 
 	executeTempRepo(url, func(tempRepo string, repo *git.Repository) (err error) {
@@ -106,4 +103,4 @@ func TestDvcInit(t *testing.T) {
 		}
 		return nil
 	})
-}
+}*/
