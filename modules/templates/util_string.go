@@ -33,6 +33,14 @@ func (su *StringUtils) Join(a []string, sep string) string {
 	return strings.Join(a, sep)
 }
 
+func (su *StringUtils) Concat(str ...string) string {
+	output := ""
+	for _, v := range str {
+		output += v
+	}
+	return output
+}
+
 func (su *StringUtils) Cut(s, sep string) []any {
 	before, after, found := strings.Cut(s, sep)
 	return []any{before, after, found}

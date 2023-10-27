@@ -1,0 +1,38 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository projects edit-project new milestone">
+	{{template "repo/header" .}}
+	<div class="ui container">
+
+		{{template "base/alert" .}}
+
+		<!-- Start of Dataset page -->
+
+		<h2 class="ui dividing header">
+			{{ctx.Locale.Tr "repo.datasets.new"}}
+			<div class="sub header">{{ctx.Locale.Tr "repo.datasets.new_subheader"}}</div>
+		</h2>
+
+		<form class="ui form" action="{{.Link}}" method="post">
+			{{.CsrfTokenHtml}} {{/* That one come from context directly */}}
+			<div class="ui center aligned">
+				{{ svg "octicon-trash" 64 }}
+				<h3 class="gt-text-center">Are you sure you want to delete that remote {{ .Name }}?</h3>
+			</div>
+
+			<div class="divider"></div>
+
+			<div class="gt-text-right">
+				<a class="ui cancel button" href="{{$.CancelLink}}">
+					{{ctx.Locale.Tr "repo.datasets.cancel"}}
+				</a>
+				<button class="ui primary button">
+					{{ctx.Locale.Tr "repo.datasets.delete"}}
+				</button>
+			</div>
+
+		</form>
+
+	</div>
+
+</div>
+{{template "base/footer" .}}

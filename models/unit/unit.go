@@ -30,6 +30,7 @@ const (
 	TypeProjects                    // 8 Kanban board
 	TypePackages                    // 9 Packages
 	TypeActions                     // 10 Actions
+	TypeDatasets                    // 11 Datasets
 )
 
 // Value returns integer value for unit type
