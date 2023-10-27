@@ -25,13 +25,6 @@
 
 		{{template "base/alert" .}}
 
-		{{/* FIXME: Don't know how to show message yet, that is temp solution*/}}
-		{{if .Message}}
-		<div class="ui info message flash-message flash-info">
-			<p>{{.Message | Str2html}}</p>
-		</div>
-		{{end}}
-
 		{{- /*gotype: code.gitea.io/gitea/modules/dvc.Remote*/ -}}
 		{{if .RemoteList }}
 		<div class="ui attached table segment">
@@ -76,6 +69,25 @@
 			{{ svg "octicon-server" 48}}
 			<h2>There is no remotes add in this repo.</h2>
 			<p>Can add new remote server by using form below.</p>
+		</div>
+		{{end}}
+
+		<h2 class="ui dividing header gt-df gt-sb">
+			<div>
+				{{ctx.Locale.Tr "repo.datasets.file_list"}}
+				<div class="sub header">{{ctx.Locale.Tr "repo.datasets.file_list_subheader"}}</div>
+			</div>
+		</h2>
+		{{ if .Files }}
+		<div class="ui list">
+			{{range $idx, $remote := .Files}}
+			<div class="item">{{svg "octicon-file" 16}}{{StringUtils.Concat "  " . }}</div>
+			{{end}}
+		</div>
+		{{ else }}
+		<div class="empty center aligned">
+			{{ svg "octicon-file" 48}}
+			<h2>There is no remotes files in this repo.</h2>
 		</div>
 		{{end}}
 		<!-- End of Dataset page -->

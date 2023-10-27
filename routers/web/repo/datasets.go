@@ -63,11 +63,17 @@ func Datasets(ctx *context.Context) {
 	if err != nil {
 		log.Error("err when remote list: %v", err)
 		errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
-		ctx.Data["Message"] = errorMsg
+		ctx.Flash.Error(errorMsg, true)
 	}
 	ctx.Data["Branches"] = branches
 	ctx.Data["Branch"] = branch
 	ctx.Data["RemoteList"] = remotes
+
+	files, err := dvc.FileList(ctx)
+	if err != nil {
+		log.Error("err when remote file list: %v", err)
+	}
+	ctx.Data["Files"] = files
 
 	ctx.HTML(http.StatusOK, tplDatasetsList)
 }
