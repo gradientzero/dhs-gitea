@@ -2,22 +2,14 @@ package repo
 
 import (
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/typesniffer"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/forms"
-	files_service "code.gitea.io/gitea/services/repository/files"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"slices"
-	"strings"
 )
 
 const (
@@ -129,27 +121,6 @@ func NewDatasetPost(ctx *context.Context) {
 	ctx.Redirect(ctx.Repo.RepoLink + "/datasets")
 }
 
-func writeToRepo(ctx *context.Context, filename string, text string, commitMessage string) error {
-	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
-		LastCommitID: ctx.Repo.CommitID,
-		OldBranch:    ctx.Repo.BranchName,
-		//NewBranch:    GetUniquePatchBranchName(ctx),
-		Message: commitMessage,
-		Files: []*files_service.ChangeRepoFile{
-			{
-				Operation:     "create",
-				FromTreePath:  ctx.Repo.TreePath,
-				TreePath:      filename,
-				ContentReader: strings.NewReader(text),
-			},
-		},
-		Signoff: true,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
 // RenderNewDataset render creating a dataset page
 func RenderNewDataset(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.datasets.new")
@@ -157,47 +128,6 @@ func RenderNewDataset(ctx *context.Context) {
 	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
 
 	ctx.HTML(http.StatusOK, tplDatasetsList)
-}
-
-// reading text from file inside repository
-func readFromRepo(ctx *context.Context, filename string) (string, error) {
-	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(filename)
-	if err != nil {
-		return "", err
-	}
-
-	blob := entry.Blob()
-	if blob.Size() >= setting.UI.MaxDisplayFileSize {
-		return "", err
-	}
-
-	dataRc, err := blob.DataAsync()
-	if err != nil {
-		return "", err
-	}
-
-	defer dataRc.Close()
-
-	buf := make([]byte, 1024)
-	n, _ := util.ReadAtMost(dataRc, buf)
-	buf = buf[:n]
-
-	// Only some file types are editable online as text.
-	if !typesniffer.DetectContentType(buf).IsRepresentableAsText() {
-		return "", errors.New("this is not text")
-	}
-
-	d, _ := io.ReadAll(dataRc)
-	if err := dataRc.Close(); err != nil {
-		return "", err
-	}
-
-	buf = append(buf, d...)
-	if content, err := charset.ToUTF8WithErr(buf); err != nil {
-		return string(buf), err
-	} else {
-		return content, nil
-	}
 }
 
 func SyncDataset(ctx *context.Context) {
