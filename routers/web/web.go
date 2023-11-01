@@ -1552,6 +1552,10 @@ func registerRoutes(m *web.Route) {
 		m.Get("/new", user.NewAvailable)
 	}, reqSignIn)
 
+	m.Group("/toggle", func() {
+		m.Post("/theme", user_setting.UpdateUserTheme)
+	}, repo.CorsHandler())
+
 	if setting.API.EnableSwagger {
 		m.Get("/swagger.v1.json", SwaggerV1Json)
 	}

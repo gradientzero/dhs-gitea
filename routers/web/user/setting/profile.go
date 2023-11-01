@@ -390,6 +390,46 @@ func UpdateUIThemePost(ctx *context.Context) {
 	ctx.Redirect(setting.AppSubURL + "/user/settings/appearance")
 }
 
+func checkThemeValue(value string) string {
+	updatedValue := "arc-green"
+	if value == "arc-green" {
+		updatedValue = "gitea"
+	}
+	return updatedValue
+}
+
+// UpdateUserTheme is a function to update user profile in navbar
+func UpdateUserTheme(ctx *context.Context) {
+	defaultTheme := setting.UI.DefaultTheme
+	user, ok := ctx.GetData()["SignedUser"].(*user_model.User)
+	if !ok {
+		setting.UI.DefaultTheme = checkThemeValue(defaultTheme)
+		ctx.Redirect(setting.AppURL)
+		return
+	}
+	updatedValue := checkThemeValue(user.Theme)
+
+	form := &forms.UpdateThemeForm{
+		Theme: updatedValue,
+	}
+	if ctx.HasError() {
+		ctx.Redirect(setting.AppURL)
+		return
+	}
+	if !form.IsThemeExists() {
+		ctx.Flash.Error(ctx.Tr("settings.theme_update_error"))
+		ctx.Redirect(setting.AppURL)
+		return
+	}
+
+	if err := user_model.UpdateUserTheme(ctx, ctx.Doer, form.Theme); err != nil {
+		ctx.Flash.Error(ctx.Tr("settings.theme_update_error"))
+		ctx.Redirect(setting.AppURL)
+		return
+	}
+	ctx.Redirect(setting.AppURL)
+}
+
 // UpdateUserLang update a user's language
 func UpdateUserLang(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.UpdateLanguageForm)
