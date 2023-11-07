@@ -117,36 +117,10 @@ func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
 }
 
 func changeFromProtocolToLink(protocol string) string {
-	protocolPath := strings.Split(protocol, "://")
-
-	if len(protocolPath) == 2 {
-		if protocolPath[0] == "s3" {
-			path := strings.Split(protocolPath[1], "/")
-			if len(path) == 2 {
-				return fmt.Sprintf("https://s3.amazonaws.com/%s/%s", path[0], path[1])
-			}
-		}
-		if protocolPath[0] == "gs" {
-			path := strings.Split(protocolPath[1], "/")
-			if len(path) == 2 {
-				return fmt.Sprintf("https://storage.googleapis.com/%s/%s", path[0], path[1])
-			}
-		}
-		if protocolPath[0] == "gdrive" {
-			return fmt.Sprintf("https://drive.google.com/drive/folders/%s", protocolPath[1])
-		}
-		if protocolPath[0] == "oss" {
-			path := strings.Split(protocolPath[1], "/")
-			if len(path) == 2 {
-				return fmt.Sprintf("https://oss.aliyuncs.com/%s/%s", path[0], path[1])
-			}
-		}
-		if protocolPath[0] == "webhdfs" {
-			path := strings.Split(protocolPath[1], "/")
-			host := strings.Split(path[0], "@")
-			if len(path) == 2 && len(host) == 2 {
-				return fmt.Sprintf("http://%s/webhdfs/v1/%s", host[1], path[1])
-			}
+	split := strings.Split(protocol, "://")
+	if len(split) >= 2 {
+		if split[0] == "gdrive" {
+			return strings.Join([]string{"https://drive.google.com/drive/folders", split[1]}, "/")
 		}
 	}
 	return protocol
