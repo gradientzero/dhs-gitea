@@ -1323,6 +1323,7 @@ func registerRoutes(m *web.Route) {
 
 		m.Group("/experiments", func() {
 			m.Get("", repo.Experiments)
+			m.Get("/table", repo.ExperimentTable)
 		}, context.RepoRef(), canEnableEditor,
 			reqRepoProjectsReader, repo.MustEnableExperiments) // TODO: check read permission
 

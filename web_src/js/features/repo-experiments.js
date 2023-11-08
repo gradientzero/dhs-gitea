@@ -1,8 +1,9 @@
-import $ from 'jquery';
+import {createApp} from 'vue';
+import RepoExperiments from '../components/RepoExperiments.vue';
 
-export function initExperimentsBranchChange() {
-  $('#experiment-branch').on('change', (event) => {
-    const url = `${window.location.pathname}?branch=${event.target.value}`;
-    window.location.replace(url);
-  });
+
+export function initExperimentVue() {
+  const experimentAppElement = document.getElementById('experiment-app');
+  const fileListView = createApp(RepoExperiments);
+  fileListView.mount(experimentAppElement);
 }
