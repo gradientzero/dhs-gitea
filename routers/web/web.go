@@ -1321,6 +1321,11 @@ func registerRoutes(m *web.Route) {
 		}, context.RepoRef(), canEnableEditor,
 			reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
 
+		m.Group("/experiments", func() {
+			m.Get("", repo.Experiments)
+		}, context.RepoRef(), canEnableEditor,
+			reqRepoProjectsReader, repo.MustEnableExperiments) // TODO: check read permission
+
 		m.Group("/actions", func() {
 			m.Get("", actions.List)
 			m.Post("/disable", reqRepoAdmin, actions.DisableWorkflowFile)

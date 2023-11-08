@@ -1,0 +1,33 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository">
+	{{template "repo/header" .}}
+	<div class="ui container">
+
+		{{/* Start of Experiments page */}}
+
+		<h2 class="ui dividing header gt-df gt-sb">
+			<div>
+				{{ctx.Locale.Tr "repo.experiments.list"}}
+			</div>
+
+			<div class="gt-p-3">
+				<select id="experiment-branch" class="ui fluid dropdown" >
+					{{range $idx, $branch := .Branches}}
+					<option value="{{.}}" {{if eq $.Branch .}}selected{{end}}>{{.}}</option>
+					{{end}}
+				</select>
+			</div>
+		</h2>
+
+		{{template "base/alert" .}}
+
+		<div class="markup content gt-overflow-x-scroll">
+			{{.Experiments|Str2html}}
+		</div>
+
+		{{/* End of Experiments page */}}
+
+	</div>
+
+</div>
+	{{template "base/footer" .}}

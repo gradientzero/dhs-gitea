@@ -205,10 +205,13 @@
 				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
 					<a href="{{.RepoLink}}/datasets" class="{{if .IsDatasetPage}}active {{end}}item">
 						{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
-						{{if .Repository.NumOpenProjects}}
-							<span class="ui small label">{{CountFmt .Repository.NumOpenProjects}}</span>
-						{{end}}
 					</a>
+				{{end}}
+
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+				<a href="{{.RepoLink}}/experiments" class="{{if .IsExperimentPage}}active {{end}}item">
+					{{svg "octicon-graph"}} {{ctx.Locale.Tr "repo.experiment"}}
+				</a>
 				{{end}}
 
 				{{if and (.Permission.CanRead $.UnitTypeReleases) (not .IsEmptyRepo)}}
