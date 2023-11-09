@@ -62,3 +62,11 @@ export default {
     <div class="markup content gt-overflow-x-scroll" v-html="experimentHtmlTable"></div>
   </div>
 </template>
+
+<style scoped>
+  /* For some reason, .markup > table not working */
+  .markup > :first-child {
+    display: table;
+    width: 100%;
+  }
+</style>
