@@ -54,13 +54,25 @@ func Experiments(ctx *context.Context) {
 
 func ExperimentTable(ctx *context.Context) {
 
+	branches, err := findBranches(ctx)
+	if err != nil {
+		log.Error("err when finding branches: %v", err)
+	}
+
+	branch := ctx.Req.URL.Query().Get("branch")
+	if branch != "" && slices.Contains(branches, branch) {
+		ctx.Repo.BranchName = branch
+	} else {
+		branch = ctx.Repo.BranchName // reset default branch name
+	}
+
 	html, err := dvc.ExperimentHtml(ctx)
 	if err != nil {
 		log.Error("err when dvc experiment to html: %v", err)
 	}
-	ctx.Data["Experiments"] = html
+	//ctx.Data["Experiments"] = html
 
 	ctx.JSON(http.StatusOK, map[string]any{
-		"experiments": html,
+		"htmlTable": html,
 	})
 }
