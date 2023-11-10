@@ -1,0 +1,21 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository">
+	{{template "repo/header" .}}
+
+	<script type="module">
+		// Initializing data from template to Vue
+		const data = {
+			title: {{ctx.Locale.Tr "repo.experiments.list"}},
+			branches: [{{range .Branches}} "{{.}}",{{end}}],
+			branch: "{{.Branch}}",
+		}
+		window.config.experimentData = data;
+	</script>
+	<!-- Vue mount -->
+	<div id="experiment-app" class="ui container"></div>
+
+	{{/* TODO:		{{template "base/alert" .}}*/}}
+
+</div>
+
+{{template "base/footer" .}}
