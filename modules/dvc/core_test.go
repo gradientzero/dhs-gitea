@@ -4,6 +4,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"fmt"
+	"github.com/dustin/go-humanize"
 	"os"
 	"regexp"
 	"testing"
@@ -68,6 +69,113 @@ func TestRegexExtract(t *testing.T) {
 	}
 }
 
+func TestJsonParse(t *testing.T) {
+	data := `
+[
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": 14445097,
+    "path": "data/data.xml"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "data/features/test.pkl"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "data/features/train.pkl"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "data/prepared/test.tsv"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "data/prepared/train.tsv"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/metrics.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/images/importance.png"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/cm/test.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/cm/train.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/prc/test.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/prc/train.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/roc/test.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": null,
+    "path": "eval/plots/sklearn/roc/train.json"
+  },
+  {
+    "isout": true,
+    "isdir": false,
+    "isexec": false,
+    "size": 1957931,
+    "path": "model.pkl"
+  }
+]
+`
+	result, _ := ParseJsonFileInfo([]byte(data))
+	fmt.Printf("%v\n", result)
+}
+
 func TestSplit(t *testing.T) {
 
 	output := `test	/tmp/data
@@ -75,6 +183,8 @@ func TestSplit(t *testing.T) {
 	`
 	remotes := ParseRemote(output)
 	fmt.Println(remotes)
+
+	fmt.Printf("That file is %s.", humanize.Bytes(1957931)) // That file is 83 MB.
 }
 
 /*func TestDvcInit(t *testing.T) {

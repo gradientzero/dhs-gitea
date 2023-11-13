@@ -81,7 +81,7 @@
 		{{ if .Files }}
 		<div class="ui list">
 			{{range $idx, $remote := .Files}}
-			<div class="item">{{svg "octicon-file" 16}}{{StringUtils.Concat "  " . }}</div>
+			<div class="item">{{svg "octicon-file" 16}}{{StringUtils.Concat "  " .Path " - "}} {{StringUtils.FormatFileSize .Size}}</div>
 			{{end}}
 		</div>
 		{{ else }}
