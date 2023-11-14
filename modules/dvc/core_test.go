@@ -187,6 +187,10 @@ func TestSplit(t *testing.T) {
 	fmt.Printf("That file is %s.", humanize.Bytes(1957931)) // That file is 83 MB.
 }
 
+func TestParseGtoRelease(t *testing.T) {
+	output, _ := ParseGtoRelease("/tmp/example-gto")
+	fmt.Printf("%v\n", output)
+}
 /*func TestDvcInit(t *testing.T) {
 	url := "/home/lin/Desktop/btrs/dhs-gitea/data/gitea-repositories/adminadmin/second-repo.git"
 
