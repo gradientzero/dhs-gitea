@@ -1,0 +1,47 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository models">
+	{{template "repo/header" .}}
+	<div class="ui container">
+
+		<!-- Start of Model page -->
+
+		<h2 class="ui dividing header gt-df gt-sb">
+			<div>
+				{{ctx.Locale.Tr "repo.models.list"}}
+				<div class="sub header">{{ctx.Locale.Tr "repo.models.list_subheader"}}</div>
+			</div>
+		</h2>
+
+		{{template "base/alert" .}}
+
+		{{if .Data }}
+		<div class="ui attached table segment">
+			<table class="ui very basic striped fixed table single line">
+				<thead>
+					{{range $idx, $header := .Header}}
+					<th class="center aligned">{{.}}</th>
+					{{ end }}
+				</thead>
+				<tbody>
+				{{range $idx, $rows := .Data}}
+				<tr>
+					{{range $idx, $cell := . }}
+						<td class="center aligned">{{ . }}</td>
+					{{ end }}
+				</tr>
+				{{end}}
+				</tbody>
+			</table>
+		</div>
+		{{ else }}
+		<div class="empty center aligned">
+			{{ svg "octicon-stack" 48}}
+			<h2>There is no release model in this repo.</h2>
+		</div>
+		{{end}}
+
+		<!-- End of Model page -->
+	</div>
+
+</div>
+{{template "base/footer" .}}

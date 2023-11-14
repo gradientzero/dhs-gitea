@@ -4,6 +4,7 @@
 package templates
 
 import (
+	"github.com/dustin/go-humanize"
 	"strings"
 
 	"code.gitea.io/gitea/modules/base"
@@ -48,4 +49,9 @@ func (su *StringUtils) Cut(s, sep string) []any {
 
 func (su *StringUtils) EllipsisString(s string, max int) string {
 	return base.EllipsisString(s, max)
+}
+
+// FormatFileSize use in dvc file size
+func (su *StringUtils) FormatFileSize(fileSize *uint64) string {
+	return humanize.Bytes(*fileSize)
 }
