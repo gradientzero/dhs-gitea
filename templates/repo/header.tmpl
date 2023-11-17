@@ -169,6 +169,24 @@
 					</a>
 				{{end}}
 
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+				<a href="{{.RepoLink}}/datasets" class="{{if .IsDatasetPage}}active {{end}}item">
+					{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
+				</a>
+				{{end}}
+
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+				<a href="{{.RepoLink}}/experiments" class="{{if .IsExperimentPage}}active {{end}}item">
+					{{svg "octicon-graph"}} {{ctx.Locale.Tr "repo.experiment"}}
+				</a>
+				{{end}}
+
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+				<a href="{{.RepoLink}}/models" class="{{if .IsModelPage}}active {{end}}item">
+					{{svg "octicon-stack"}} {{ctx.Locale.Tr "repo.model"}}
+				</a>
+				{{end}}
+
 				{{if and .Repository.CanEnablePulls (.Permission.CanRead $.UnitTypePullRequests)}}
 					<a class="{{if .PageIsPullList}}active {{end}}item" href="{{.RepoLink}}/pulls">
 						{{svg "octicon-git-pull-request"}} {{ctx.Locale.Tr "repo.pulls"}}
@@ -200,24 +218,6 @@
 							<span class="ui small label">{{CountFmt .Repository.NumOpenProjects}}</span>
 						{{end}}
 					</a>
-				{{end}}
-
-				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
-					<a href="{{.RepoLink}}/datasets" class="{{if .IsDatasetPage}}active {{end}}item">
-						{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
-					</a>
-				{{end}}
-
-				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
-				<a href="{{.RepoLink}}/experiments" class="{{if .IsExperimentPage}}active {{end}}item">
-					{{svg "octicon-graph"}} {{ctx.Locale.Tr "repo.experiment"}}
-				</a>
-				{{end}}
-
-				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
-				<a href="{{.RepoLink}}/models" class="{{if .IsModelPage}}active {{end}}item">
-					{{svg "octicon-stack"}} {{ctx.Locale.Tr "repo.model"}}
-				</a>
 				{{end}}
 
 				{{if and (.Permission.CanRead $.UnitTypeReleases) (not .IsEmptyRepo)}}

@@ -35,7 +35,8 @@
 					<th class="center aligned">Author</th>
 					<th class="center aligned">Name</th>
 					<th class="center aligned">Url</th>
-					<th/>
+{{/*					Remove button for sync and delete*/}}
+{{/*					<th />*/}}
 				</tr>
 				</thead>
 				<tbody>
@@ -53,12 +54,12 @@
 					<td class="center aligned">
 						<a href="{{ .Link }}" target="_blank">{{ .Url }}</a>
 					</td>
-					<td class="gt-text-right">
-						<a href="{{$.RemoteLink}}/{{.Name}}/sync" class="ui small primary button">{{svg "octicon-sync"}}</a>
+{{/*					<td class="gt-text-right">*/}}
+{{/*						<a href="{{$.RemoteLink}}/{{.Name}}/sync" class="ui small primary button">{{svg "octicon-sync"}}</a>*/}}
 
 						{{/* Comment out for delete remote icon */}}
 						{{/* <a href="{{$.RemoteLink}}/{{.Name}}/delete" class="ui small secondary button">{{svg "octicon-trash"}}</a>*/}}
-					</td>
+{{/*					</td>*/}}
 				</tr>
 				{{end}}
 				</tbody>
