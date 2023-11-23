@@ -538,6 +538,11 @@ var migrations = []Migration{
 	NewMigration("Add Index to issue_user.issue_id", v1_21.AddIndexToIssueUserIssueID),
 	// v278 -> v279
 	NewMigration("Add Index to comment.dependent_issue_id", v1_21.AddIndexToCommentDependentIssueID),
+	// v279 -> v280
+	NewMigration("Add Org SSH Key Table", v1_21.AddOrgSshKeyTable),
+
+	// v280 -> v281
+	NewMigration("Add Name to Org SSH Key Table", v1_21.AddNameToOrgSshKeys),
 }
 
 // GetCurrentDBVersion returns the current db version
