@@ -39,6 +39,7 @@ import octiconIssueClosed from '../../public/assets/img/svg/octicon-issue-closed
 import octiconIssueOpened from '../../public/assets/img/svg/octicon-issue-opened.svg';
 import octiconItalic from '../../public/assets/img/svg/octicon-italic.svg';
 import octiconKebabHorizontal from '../../public/assets/img/svg/octicon-kebab-horizontal.svg';
+import octiconKey from '../../public/assets/img/svg/octicon-key.svg';
 import octiconLink from '../../public/assets/img/svg/octicon-link.svg';
 import octiconListOrdered from '../../public/assets/img/svg/octicon-list-ordered.svg';
 import octiconListUnordered from '../../public/assets/img/svg/octicon-list-unordered.svg';
@@ -66,6 +67,7 @@ import octiconSync from '../../public/assets/img/svg/octicon-sync.svg';
 import octiconTable from '../../public/assets/img/svg/octicon-table.svg';
 import octiconTag from '../../public/assets/img/svg/octicon-tag.svg';
 import octiconTriangleDown from '../../public/assets/img/svg/octicon-triangle-down.svg';
+import octiconTrash from '../../public/assets/img/svg/octicon-trash.svg';
 import octiconX from '../../public/assets/img/svg/octicon-x.svg';
 import octiconXCircleFill from '../../public/assets/img/svg/octicon-x-circle-fill.svg';
 
@@ -110,6 +112,7 @@ const svgs = {
   'octicon-issue-opened': octiconIssueOpened,
   'octicon-italic': octiconItalic,
   'octicon-kebab-horizontal': octiconKebabHorizontal,
+  'octicon-key': octiconKey,
   'octicon-link': octiconLink,
   'octicon-list-ordered': octiconListOrdered,
   'octicon-list-unordered': octiconListUnordered,
@@ -136,6 +139,7 @@ const svgs = {
   'octicon-sync': octiconSync,
   'octicon-table': octiconTable,
   'octicon-tag': octiconTag,
+  'octicon-trash': octiconTrash,
   'octicon-triangle-down': octiconTriangleDown,
   'octicon-x': octiconX,
   'octicon-x-circle-fill': octiconXCircleFill,

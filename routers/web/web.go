@@ -883,6 +883,12 @@ func registerRoutes(m *web.Route) {
 					addSettingVariablesRoutes()
 				}, actions.MustEnableActions)
 
+				m.Group("/ssh-key", func() {
+					m.Get("", org.SettingsSshKeyList)
+					m.Methods("GET,POST", "/new", org.SettingsSshKeyCreate)
+					m.Post("/delete", org.SettingsSshKeyDelete)
+				})
+
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
 
 				m.Group("/packages", func() {
