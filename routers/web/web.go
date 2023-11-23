@@ -889,6 +889,12 @@ func registerRoutes(m *web.Route) {
 					m.Post("/delete", org.SettingsSshKeyDelete)
 				})
 
+				m.Group("/machine", func() {
+					m.Get("", org.SettingsMachineList)
+					m.Methods("GET,POST", "/new", web.Bind(forms.SettingMachineForm{}), org.SettingsMachineCreate)
+					m.Post("/delete", org.SettingsMachineDelete)
+				})
+
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
 
 				m.Group("/packages", func() {

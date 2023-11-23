@@ -5,6 +5,7 @@ import {initRepoActivityTopAuthorsChart} from './components/RepoActivityTopAutho
 import {initScopedAccessTokenCategories} from './components/ScopedAccessTokenSelector.vue';
 import {initDashboardRepoList} from './components/DashboardRepoList.vue';
 import {initOrgSettingSshKeyList} from './components/OrgSettingSshKeyList.vue';
+import {initOrgSettingMachineList} from './components/OrgSettingMachineList.vue';
 
 import {initGlobalCopyToClipboardListener} from './features/clipboard.js';
 import {initContextPopups} from './features/contextpopup.js';
@@ -142,6 +143,7 @@ onDomReady(() => {
   initOrgTeamSettings();
 
   initOrgSettingSshKeyList();
+  initOrgSettingMachineList();
 
   initRepoActivityTopAuthorsChart();
   initRepoArchiveLinks();

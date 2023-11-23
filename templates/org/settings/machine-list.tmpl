@@ -1,12 +1,12 @@
-{{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings ssh")}}
+{{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings machine")}}
 
 			<div class="org-setting-content">
 				<h4 class="ui top attached header">
-					{{ctx.Locale.Tr "org.settings.ssh_key_form"}}
+					{{ctx.Locale.Tr "org.settings.machine_form"}}
 
 					<div class="ui right">
 						<a href="{{.Link}}/new" class="ui primary tiny toggle button">
-							{{ctx.Locale.Tr "org.settings.create_ssh_key"}}
+							{{ctx.Locale.Tr "org.settings.create_machine"}}
 						</a>
 					</div>
 				</h4>
@@ -16,14 +16,13 @@
 					const data = {
 						link: "{{$.Link}}",
 						csrfToken : "{{$.CsrfToken}}",
-						sshKeys: [{{range .SshKeys}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
+						machines: [{{range .Machines}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
 					}
-					window.config.settingSshData = data;
+					window.config.settingsMachineData = data;
 				</script>
 
 				<!-- Vue mount -->
-				<div id="setting-ssh-key-app" class="ui attached segment"></div>
+				<div id="setting-machine-app" class="ui attached segment"></div>
 
 			</div>
-
 {{template "org/settings/layout_footer" .}}

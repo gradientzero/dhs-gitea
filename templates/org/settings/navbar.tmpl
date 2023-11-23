@@ -38,9 +38,15 @@
 			</div>
 		</details>
 		{{end}}
+
 		<a class="{{if .PageIsSettingsSshKey}}active {{end}}item" href="{{.OrgLink}}/settings/ssh-key">
 			{{ctx.Locale.Tr "org.settings.ssh_key"}}
 		</a>
+
+		<a class="{{if .PageIsSettingsMachine}}active {{end}}item" href="{{.OrgLink}}/settings/machine">
+			{{ctx.Locale.Tr "org.settings.machine"}}
+		</a>
+
 		<a class="{{if .PageIsSettingsDelete}}active {{end}}item" href="{{.OrgLink}}/settings/delete">
 			{{ctx.Locale.Tr "org.settings.delete"}}
 		</a>
