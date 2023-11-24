@@ -20,6 +20,9 @@ const sfc = {
   },
   methods: {
 
+    editLink(machine) {
+      return this.$data.link + '/edit?id=' + machine.ID
+    },
     deleteMachine(event) {
       event.preventDefault();
 
@@ -65,6 +68,9 @@ export function initOrgSettingMachineList(){
         </div>
 
         <div class="flex-item-trailing">
+          <a :href="editLink(machine)" class="ui tiny button">
+            <SvgIcon name="octicon-file" />
+          </a>
           <form class="ui form" :action="deleteLink" method="post" @submit="deleteMachine($event)">
             <input type="hidden" name="_csrf" :value="csrfToken">
             <input name="id" type="hidden" :value="machine.ID">

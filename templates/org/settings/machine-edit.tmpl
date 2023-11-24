@@ -8,21 +8,23 @@
 					<form class="ui form" action="{{.Link}}" method="post">
 						{{.CsrfTokenHtml}}
 
+						<input type="hidden" name="id" value="{{ .ID }}" >
+
 						<div class="field">
 							<label for="name">{{ctx.Locale.Tr "org.settings.machine_name"}}</label>
-							<input id="name" name="name" type="text" />
+							<input id="name" name="name" type="text" value="{{ .Machine.Name}}"/>
 						</div>
 
 						<div class="field">
 							<label for="user">{{ctx.Locale.Tr "org.settings.machine_user"}}</label>
-							<input type="text" id="user" name="user" />
+							<input type="text" id="user" name="user" value="{{ .Machine.User }}" />
 						</div>
 
 						<div class="field">
 							<label>{{ctx.Locale.Tr "org.settings.machine_ssh_key"}}</label>
 							<select name="ssh_key">
 								{{range .Keys}}
-								<option value="{{ .ID }}">{{ .Name }}</option>
+								<option value="{{ .ID }}" {{if eq $.Machine.SshKey .ID }}selected {{end}} >{{ .Name }}</option>
 								{{ end }}
 							</select>
 
@@ -30,16 +32,16 @@
 
 						<div class="field">
 							<label for="host">{{ctx.Locale.Tr "org.settings.machine_host"}}</label>
-							<input type="text" id="host" name="host" />
+							<input type="text" id="host" name="host" value="{{ .Machine.Host}}"/>
 						</div>
 
 						<div class="field">
 							<label for="port">{{ctx.Locale.Tr "org.settings.machine_port"}}</label>
-							<input type="number" id="port" name="port" />
+							<input type="number" id="port" name="port" value="{{ .Machine.Port}}"/>
 						</div>
 
 						<button class="ui primary button">
-							{{ctx.Locale.Tr "org.settings.create_machine"}}
+							{{ctx.Locale.Tr "org.settings.update_machine"}}
 						</button>
 
 					</form>

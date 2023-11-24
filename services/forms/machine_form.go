@@ -8,10 +8,11 @@ import (
 )
 
 type SettingMachineForm struct {
-	Name string
-	User string
-	Host string
-	Port int32
+	Name   string
+	User   string
+	Host   string
+	Port   int32
+	SshKey int64
 }
 
 func (f *SettingMachineForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {

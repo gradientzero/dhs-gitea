@@ -892,6 +892,7 @@ func registerRoutes(m *web.Route) {
 				m.Group("/machine", func() {
 					m.Get("", org.SettingsMachineList)
 					m.Methods("GET,POST", "/new", web.Bind(forms.SettingMachineForm{}), org.SettingsMachineCreate)
+					m.Methods("GET,POST", "/edit", web.Bind(forms.SettingMachineForm{}), org.SettingsMachineEdit)
 					m.Post("/delete", org.SettingsMachineDelete)
 				})
 

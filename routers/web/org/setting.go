@@ -7,7 +7,6 @@ package org
 import (
 	"code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/organization"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -40,6 +39,7 @@ const (
 
 	tplSettingsMachineList base.TplName = "org/settings/machine-list"
 	tplSettingsMachineForm base.TplName = "org/settings/machine-form"
+	tplSettingsMachineEdit base.TplName = "org/settings/machine-edit"
 
 	// tplSettingsDelete template path for render delete repository
 	tplSettingsDelete base.TplName = "org/settings/delete"
@@ -274,8 +274,7 @@ func SettingsMachineCreate(ctx *context.Context) {
 
 	if ctx.Req.Method == "POST" {
 		form := web.GetForm(ctx).(*forms.SettingMachineForm)
-		fmt.Println(form)
-		err := organization.AddMachine(ctx.Org.Organization.ID, form.Name, form.User, form.Host, form.Port)
+		err := organization.AddMachine(ctx.Org.Organization.ID, form.Name, form.User, form.Host, form.Port, form.SshKey)
 		if err != nil {
 			ctx.Flash.Error("error on saving machine")
 			ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/new")
@@ -284,8 +283,53 @@ func SettingsMachineCreate(ctx *context.Context) {
 		ctx.Flash.Success("Machine added successfully")
 		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine")
 	}
-
+	keys, err := organization.GetOrgSshKey(ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("Error on loading ssh Keys")
+	}
+	ctx.Data["Keys"] = keys
 	ctx.HTML(http.StatusOK, tplSettingsMachineForm)
+}
+
+func SettingsMachineEdit(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("org.settings")
+	ctx.Data["PageIsOrgSettings"] = true
+	ctx.Data["PageIsSettingsMachine"] = true
+
+	id := ctx.FormInt64("id")
+
+	machine := &organization.OrgMachine{}
+	// check id exist or not
+	machine, err := organization.GetMachineById(id, ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("error loading machine data")
+		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/edit")
+	}
+
+	if ctx.Req.Method == "POST" {
+		form := web.GetForm(ctx).(*forms.SettingMachineForm)
+		err := organization.UpdateMachine(ctx.Org.Organization.ID, id,
+			form.Name, form.User, form.Host, form.Port, form.SshKey)
+
+		if err != nil {
+			ctx.Flash.Error("error on saving machine")
+			ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/edit?id=" + string(id))
+		}
+
+		ctx.Flash.Success("Machine updated successfully")
+		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine")
+	}
+
+	keys, err := organization.GetOrgSshKey(ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("Error on loading ssh Keys")
+	}
+
+	ctx.Data["ID"] = id
+	ctx.Data["Machine"] = machine
+	ctx.Data["Keys"] = keys
+
+	ctx.HTML(http.StatusOK, tplSettingsMachineEdit)
 }
 
 func SettingsMachineDelete(ctx *context.Context) {

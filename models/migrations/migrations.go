@@ -546,6 +546,9 @@ var migrations = []Migration{
 
 	// v281 -> v282
 	NewMigration("Add Org Machine Table", v1_21.AddOrgMachineTable),
+
+	// v282 -> v283
+	NewMigration("Add Ssh Key to Org Machine Table", v1_21.AddSshKeyToOrgMachineTable),
 }
 
 // GetCurrentDBVersion returns the current db version

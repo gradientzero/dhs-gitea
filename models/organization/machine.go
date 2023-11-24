@@ -6,10 +6,11 @@ import (
 )
 
 type OrgMachine struct {
-	ID          int64              `xorm:"pk autoincr"`
-	OwnerID     int64              `xorm:"INDEX NOT NULL"`
-	Name        string             `xorm:"NOT NULL"`
-	User        string             `xorm:"VARCHAR(100)"`
+	ID          int64  `xorm:"pk autoincr"`
+	OwnerID     int64  `xorm:"INDEX NOT NULL"`
+	Name        string `xorm:"NOT NULL"`
+	User        string `xorm:"VARCHAR(100)"`
+	SshKey      int64
 	Host        string             `xorm:"VARCHAR(200)"`
 	Port        int32              `xorm:"BIGINT"`
 	CreatedUnix timeutil.TimeStamp `xorm:"created"`
@@ -17,7 +18,7 @@ type OrgMachine struct {
 }
 
 // AddMachine adds machine to database
-func AddMachine(ownerID int64, name, user, host string, port int32) error {
+func AddMachine(ownerID int64, name, user, host string, port int32, sshKey int64) error {
 
 	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
@@ -33,12 +34,39 @@ func AddMachine(ownerID int64, name, user, host string, port int32) error {
 		Name:    name,
 		Host:    host,
 		Port:    port,
+		SshKey:  sshKey,
 	}
 
 	// Save SSH key.
 	if err = db.Insert(ctx, key); err != nil {
 		return err
 	}
+
+	return committer.Commit()
+}
+
+func UpdateMachine(ownerID int64, ID int64,
+	name, user, host string,
+	port int32, sshKey int64) error {
+
+	ctx, committer, err := db.TxContext(db.DefaultContext)
+	if err != nil {
+		return err
+	}
+
+	defer committer.Close()
+
+	machine := &OrgMachine{
+		User:   user,
+		Name:   name,
+		Host:   host,
+		Port:   port,
+		SshKey: sshKey,
+	}
+
+	_, err = db.GetEngine(ctx).ID(ID).
+		Cols("name", "user", "host", "port", "ssh_key").
+		Update(machine)
 
 	return committer.Commit()
 }
