@@ -22,7 +22,9 @@
 
 						<div class="field">
 							<label>{{ctx.Locale.Tr "org.settings.machine_ssh_key"}}</label>
-							<select name="ssh_key">
+							<select name="ssh_key" class="ui fluid dropdown">
+								{{/*	Empty value to choose */}}
+								<option value="0">&nbsp;</option>
 								{{range .Keys}}
 								<option value="{{ .ID }}" {{if eq $.Machine.SshKey .ID }}selected {{end}} >{{ .Name }}</option>
 								{{ end }}

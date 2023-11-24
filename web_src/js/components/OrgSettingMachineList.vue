@@ -69,7 +69,7 @@ export function initOrgSettingMachineList(){
 
         <div class="flex-item-trailing">
           <a :href="editLink(machine)" class="ui tiny button">
-            <SvgIcon name="octicon-file" />
+            <SvgIcon name="octicon-pencil" />
           </a>
           <form class="ui form" :action="deleteLink" method="post" @submit="deleteMachine($event)">
             <input type="hidden" name="_csrf" :value="csrfToken">
