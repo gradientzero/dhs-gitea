@@ -48,6 +48,7 @@ import octiconMeter from '../../public/assets/img/svg/octicon-meter.svg';
 import octiconMilestone from '../../public/assets/img/svg/octicon-milestone.svg';
 import octiconMirror from '../../public/assets/img/svg/octicon-mirror.svg';
 import octiconOrganization from '../../public/assets/img/svg/octicon-organization.svg';
+import octiconPencil from '../../public/assets/img/svg/octicon-pencil.svg';
 import octiconPlay from '../../public/assets/img/svg/octicon-play.svg';
 import octiconPlus from '../../public/assets/img/svg/octicon-plus.svg';
 import octiconProject from '../../public/assets/img/svg/octicon-project.svg';
@@ -58,6 +59,7 @@ import octiconRepoTemplate from '../../public/assets/img/svg/octicon-repo-templa
 import octiconRss from '../../public/assets/img/svg/octicon-rss.svg';
 import octiconScreenFull from '../../public/assets/img/svg/octicon-screen-full.svg';
 import octiconSearch from '../../public/assets/img/svg/octicon-search.svg';
+import octionServer from '../../public/assets/img/svg/octicon-server.svg';
 import octiconSidebarCollapse from '../../public/assets/img/svg/octicon-sidebar-collapse.svg';
 import octiconSidebarExpand from '../../public/assets/img/svg/octicon-sidebar-expand.svg';
 import octiconSkip from '../../public/assets/img/svg/octicon-skip.svg';
@@ -121,6 +123,7 @@ const svgs = {
   'octicon-milestone': octiconMilestone,
   'octicon-mirror': octiconMirror,
   'octicon-organization': octiconOrganization,
+  'octicon-pencil': octiconPencil,
   'octicon-play': octiconPlay,
   'octicon-plus': octiconPlus,
   'octicon-project': octiconProject,
@@ -131,6 +134,7 @@ const svgs = {
   'octicon-rss': octiconRss,
   'octicon-screen-full': octiconScreenFull,
   'octicon-search': octiconSearch,
+  'octicon-server': octionServer,
   'octicon-sidebar-collapse': octiconSidebarCollapse,
   'octicon-sidebar-expand': octiconSidebarExpand,
   'octicon-skip': octiconSkip,

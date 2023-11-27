@@ -36,6 +36,11 @@ const (
 
 	tplSettingsSshKeyList base.TplName = "org/settings/ssh-key-list"
 	tplSettingsSshKeyForm base.TplName = "org/settings/ssh-key-form"
+
+	tplSettingsMachineList base.TplName = "org/settings/machine-list"
+	tplSettingsMachineForm base.TplName = "org/settings/machine-form"
+	tplSettingsMachineEdit base.TplName = "org/settings/machine-edit"
+
 	// tplSettingsDelete template path for render delete repository
 	tplSettingsDelete base.TplName = "org/settings/delete"
 	// tplSettingsHooks template path for render hook settings
@@ -172,6 +177,8 @@ func SettingsDeleteAvatar(ctx *context.Context) {
 	ctx.JSONRedirect(ctx.Org.OrgLink + "/settings")
 }
 
+// region SshKey
+
 // SettingsSshKeyList list ssh key for organization
 func SettingsSshKeyList(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("org.settings")
@@ -239,6 +246,104 @@ func SettingsSshKeyDelete(ctx *context.Context) {
 	// Redirect After post request
 	ctx.Redirect(ctx.Org.OrgLink + "/settings/ssh-key")
 }
+
+// endregion
+
+// region machine
+
+func SettingsMachineList(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("org.settings")
+	ctx.Data["PageIsOrgSettings"] = true
+	ctx.Data["PageIsSettingsMachine"] = true
+
+	machines, err := organization.GetOrgMachine(ctx.Org.Organization.ID)
+
+	if err != nil {
+		ctx.Flash.Error("error on loading machines")
+	}
+
+	ctx.Data["Machines"] = machines
+
+	ctx.HTML(http.StatusOK, tplSettingsMachineList)
+}
+
+func SettingsMachineCreate(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("org.settings")
+	ctx.Data["PageIsOrgSettings"] = true
+	ctx.Data["PageIsSettingsMachine"] = true
+
+	if ctx.Req.Method == "POST" {
+		form := web.GetForm(ctx).(*forms.SettingMachineForm)
+		err := organization.AddMachine(ctx.Org.Organization.ID, form.Name, form.User, form.Host, form.Port, form.SshKey)
+		if err != nil {
+			ctx.Flash.Error("error on saving machine")
+			ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/new")
+		}
+
+		ctx.Flash.Success("Machine added successfully")
+		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine")
+	}
+	keys, err := organization.GetOrgSshKey(ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("Error on loading ssh Keys")
+	}
+	ctx.Data["Keys"] = keys
+	ctx.HTML(http.StatusOK, tplSettingsMachineForm)
+}
+
+func SettingsMachineEdit(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("org.settings")
+	ctx.Data["PageIsOrgSettings"] = true
+	ctx.Data["PageIsSettingsMachine"] = true
+
+	id := ctx.FormInt64("id")
+
+	machine := &organization.OrgMachine{}
+	// check id exist or not
+	machine, err := organization.GetMachineById(id, ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("error loading machine data")
+		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/edit")
+	}
+
+	if ctx.Req.Method == "POST" {
+		form := web.GetForm(ctx).(*forms.SettingMachineForm)
+		err := organization.UpdateMachine(ctx.Org.Organization.ID, id,
+			form.Name, form.User, form.Host, form.Port, form.SshKey)
+
+		if err != nil {
+			ctx.Flash.Error("error on saving machine")
+			ctx.Redirect(ctx.Org.OrgLink + "/settings/machine/edit?id=" + string(id))
+		}
+
+		ctx.Flash.Success("Machine updated successfully")
+		ctx.Redirect(ctx.Org.OrgLink + "/settings/machine")
+	}
+
+	keys, err := organization.GetOrgSshKey(ctx.Org.Organization.ID)
+	if err != nil {
+		ctx.Flash.Error("Error on loading ssh Keys")
+	}
+
+	ctx.Data["ID"] = id
+	ctx.Data["Machine"] = machine
+	ctx.Data["Keys"] = keys
+
+	ctx.HTML(http.StatusOK, tplSettingsMachineEdit)
+}
+
+func SettingsMachineDelete(ctx *context.Context) {
+	id := ctx.FormInt64("id")
+	// save to db
+	// TODO: check error here
+	_ = organization.DeleteMachine(id)
+
+	ctx.Flash.Warning(ctx.Tr("org.settings.machine_deleted"))
+	// Redirect After post request
+	ctx.Redirect(ctx.Org.OrgLink + "/settings/machine")
+}
+
+// endregion
 
 // SettingsDelete response for deleting an organization
 func SettingsDelete(ctx *context.Context) {
