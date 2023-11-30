@@ -89,6 +89,7 @@ import {initRepoDiffCommitBranchesAndTags} from './features/repo-diff-commit.js'
 import {initDirAuto} from './modules/dirauto.js';
 import {initDatasetsBranchChange} from './features/repo-datasets.js';
 import {initExperimentVue} from './features/repo-experiments.js';
+import {initRepoCompute} from './components/RepoCompute.Vue';
 
 // Init Gitea's Fomantic settings
 initGiteaFomantic();
@@ -180,6 +181,7 @@ onDomReady(() => {
   initRepositoryActionView();
   initDatasetsBranchChange();
   initExperimentVue();
+  initRepoCompute();
 
   initCommitStatuses();
   initCaptcha();

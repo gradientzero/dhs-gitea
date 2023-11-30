@@ -187,6 +187,12 @@
 				</a>
 				{{end}}
 
+				{{if and (not .UnitProjectsGlobalDisabled) (.Permission.CanRead $.UnitTypeProjects)}}
+				<a href="{{.RepoLink}}/compute" class="{{if .IsComputePage}}active {{end}}item">
+					{{svg "octicon-server"}} {{ctx.Locale.Tr "repo.compute"}}
+				</a>
+				{{end}}
+
 				{{if and .Repository.CanEnablePulls (.Permission.CanRead $.UnitTypePullRequests)}}
 					<a class="{{if .PageIsPullList}}active {{end}}item" href="{{.RepoLink}}/pulls">
 						{{svg "octicon-git-pull-request"}} {{ctx.Locale.Tr "repo.pulls"}}

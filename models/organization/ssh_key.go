@@ -82,7 +82,7 @@ func GetOrgSshKey(ownerID int64) ([]OrgSshKey, error) {
 	return allKeys, nil
 }
 
-func GetKeyById(ID int64, ownerID int64) (*OrgSshKey, error) {
+func GetOrgSshKeyByID(ID int64, ownerID int64) (*OrgSshKey, error) {
 	key := new(OrgSshKey)
 
 	_, err := db.GetEngine(db.DefaultContext).
