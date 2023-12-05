@@ -1348,7 +1348,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("/compute", func() {
 			m.Get("", repo.Computes)
 			m.Get("/execute", repo.ComputeExecute)
-		}, context.RepoRef(), canEnableEditor,
+		}, context.RepoRef(), canEnableEditor, context.RepoAssignment,
 			reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
 
 		m.Group("/actions", func() {

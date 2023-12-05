@@ -2,10 +2,12 @@ package repo
 
 import (
 	org_model "code.gitea.io/gitea/models/organization"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/devpod"
 	"code.gitea.io/gitea/modules/log"
-	"fmt"
+	"github.com/buildkite/terminal-to-html/v3"
 	"net/http"
 	"strconv"
 )
@@ -95,11 +97,22 @@ func ComputeExecute(ctx *context.Context) {
 		log.Error("error on getting ssh key")
 	}
 
-	fmt.Println(orgMachine.User)
-	fmt.Println(orgSshKey.PrivateKey)
+	user := orgMachine.User
+	host := orgMachine.Host
+	port := orgMachine.Port
 
+	privateKey := orgSshKey.PrivateKey
+	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
+	gitUrl := cloneLink.HTTPS
+
+	result, err := devpod.Execute(privateKey, user, host, port, gitUrl)
+	if err != nil {
+		log.Error("%v", err)
+	}
+
+	output := terminal.Render([]byte(result))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"machineId": machineId,
-		"result":    "that will be computed result",
+		"result":    string(output),
 	})
 }

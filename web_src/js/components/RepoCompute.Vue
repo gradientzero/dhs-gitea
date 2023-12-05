@@ -17,9 +17,6 @@ const sfc = {
       machines: window.config.computeData.machines,
     };
   },
-  computed: {
-
-  },
   methods: {
     compute: function () {
       // fetch html markup table
@@ -72,7 +69,8 @@ export function initRepoCompute(){
       </div>
     </div>
     <div v-else-if="isComputed">
-      <div class="markup content gt-overflow-x-scroll">{{ this.computedResult }}</div>
+      <div class="markup content gt-overflow-x-scroll term-container gt-mt-3" v-html="this.computedResult">
+      </div>
     </div>
   </div>
 
@@ -81,3 +79,7 @@ export function initRepoCompute(){
     <h2>You can't compute for this repository.</h2>
   </div>
 </template>
+
+<style>
+  @import "./../../css/terminal.css";
+</style>
