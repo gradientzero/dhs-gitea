@@ -896,6 +896,18 @@ func registerRoutes(m *web.Route) {
 					m.Post("/delete", org.SettingsMachineDelete)
 				})
 
+				m.Group("/gitea-token", func() {
+					m.Get("", org.SettingsGiteaTokenList)
+					m.Methods("GET,POST", "/new", org.SettingsGiteaTokenCreate)
+					m.Post("/delete", org.SettingsGiteaTokenDelete)
+				})
+
+				m.Group("/devpod-credential", func() {
+					m.Get("", org.SettingsDevpodCredentialList)
+					m.Methods("GET,POST", "/new", org.SettingsDevpodCredentialCreate)
+					m.Post("/delete", org.SettingsDevpodCredentialDelete)
+				})
+
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
 
 				m.Group("/packages", func() {

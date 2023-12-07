@@ -10,6 +10,7 @@ import (
 	"github.com/buildkite/terminal-to-html/v3"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -105,7 +106,36 @@ func ComputeExecute(ctx *context.Context) {
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
 	gitUrl := cloneLink.HTTPS
 
-	result, err := devpod.Execute(privateKey, user, host, port, gitUrl)
+	gitUser := ctx.Doer.Name
+	tokens, err := org_model.GetOrgGiteaToken(ctx.Repo.Owner.ID)
+	if err != nil {
+		log.Error("%v", err)
+	}
+	
+	var gitToken string
+	if len(tokens) > 0 {
+		gitToken = tokens[0].Token
+	}
+
+	gitUrl = strings.Replace(gitUrl, "://", "://"+gitUser+":"+gitToken+"@", 1)
+	//gitUrl = "http://adminadmin:d718e5fe99591411878cc8b031d5f70c9481871f@gitea.local:3000/org-1/aqua-research.git"
+
+	credentials, err := org_model.GetOrgDevpodCredential(ctx.Repo.Owner.ID)
+	if err != nil {
+		log.Error("%v", err)
+	}
+
+	var config map[string][]org_model.OrgDevpodCredential
+
+	for _, credential := range credentials {
+		if v, ok := config["name"]; ok {
+			config["name"] = append(v, credential)
+		} else {
+			config["name"] = []org_model.OrgDevpodCredential{credential}
+		}
+	}
+
+	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, config)
 	if err != nil {
 		log.Error("%v", err)
 	}

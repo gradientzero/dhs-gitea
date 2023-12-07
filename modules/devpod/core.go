@@ -1,6 +1,7 @@
 package devpod
 
 import (
+	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/modules/log"
 	"fmt"
 	"github.com/rs/xid"
@@ -14,7 +15,7 @@ import (
 // TODO: 2. need to find git credential handling for pushing back
 // not sure concurrent safety for devpod for now
 
-func Execute(privateKey, user, host string, port int32, gitUrl string) (string, error) {
+func Execute(privateKey, user, host string, port int32, gitUrl string, config map[string][]org_model.OrgDevpodCredential) (string, error) {
 
 	//gitUrl := "git@gitlab.com:grz1/aqua-research.git" // NOTE: make sure to trim, will get surprise if there is space
 
@@ -63,6 +64,21 @@ func Execute(privateKey, user, host string, port int32, gitUrl string) (string, 
 		log.Error("error when devpod up: %v", err)
 	}
 	result += string(output) + "\n"
+
+	for key, v := range config {
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo ['remote \""+key+"\"'] >> .dvc/config.local")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error: %v", err)
+		}
+		for _, value := range v {
+			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo "+value.Key+"="+value.Value+" >> .dvc/config.local")
+			output, err = cmd.CombinedOutput()
+			if err != nil {
+				log.Error("error: %v", err)
+			}
+		}
+	}
 
 	//devpod ssh <workspace-id> --command 'dvc pull'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
