@@ -57,6 +57,8 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 	}
 	result += string(output) + "\n"
 
+	result += "Git Url:" + string(gitUrl)
+
 	// devpod up --provider <provider-id> <git-url> --ide none --debug --id <workspace-id>
 	cmd = exec.Command("devpod", "up", gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
 	output, err = cmd.CombinedOutput()
