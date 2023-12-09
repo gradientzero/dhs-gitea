@@ -111,7 +111,7 @@ func ComputeExecute(ctx *context.Context) {
 	if err != nil {
 		log.Error("%v", err)
 	}
-	
+
 	var gitToken string
 	if len(tokens) > 0 {
 		gitToken = tokens[0].Token
@@ -125,13 +125,14 @@ func ComputeExecute(ctx *context.Context) {
 		log.Error("%v", err)
 	}
 
-	var config map[string][]org_model.OrgDevpodCredential
+	var config = make(map[string][]org_model.OrgDevpodCredential)
 
 	for _, credential := range credentials {
-		if v, ok := config["name"]; ok {
-			config["name"] = append(v, credential)
+		if v, ok := config[credential.Name]; ok {
+			config[credential.Name] = append(v, credential)
 		} else {
-			config["name"] = []org_model.OrgDevpodCredential{credential}
+			var lst = []org_model.OrgDevpodCredential{credential}
+			config[credential.Name] = lst
 		}
 	}
 
