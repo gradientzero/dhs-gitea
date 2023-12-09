@@ -106,7 +106,7 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 
 	//devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email git@dhs.detabord.com")
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name 'Gitea User'")
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name \"Gitea User\"")
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
 	output, err = cmd.CombinedOutput()
 	if err != nil {
