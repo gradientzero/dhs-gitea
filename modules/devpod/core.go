@@ -81,8 +81,6 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 	}
 
 	//devpod ssh <workspace-id> --command 'dvc pull'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "cd dvclive")
-	cmd.CombinedOutput()
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
 	output, err = cmd.CombinedOutput()
 	if err != nil {
@@ -91,7 +89,7 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 	result += string(output) + "\n"
 
 	//devpod ssh <workspace-id> --command 'dvc exp run'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "cd dvclive && dvc exp run")
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Error("error when dvc exp run: %v", err)
