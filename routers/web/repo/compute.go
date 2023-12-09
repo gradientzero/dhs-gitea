@@ -138,7 +138,6 @@ func ComputeExecute(ctx *context.Context) {
 
 	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, config)
 
-	result = result + "\n" + "HTTPS URL: " + cloneLink.HTTPS
 	if err != nil {
 		log.Error("%v", err)
 	}
