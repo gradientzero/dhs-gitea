@@ -106,8 +106,6 @@ func ComputeExecute(ctx *context.Context) {
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
 	gitUrl := cloneLink.HTTPS
 
-	log.Error("HTTPS URL: " + cloneLink.HTTPS)
-
 	gitUser := ctx.Doer.Name
 	tokens, err := org_model.GetOrgGiteaToken(ctx.Repo.Owner.ID)
 	if err != nil {
@@ -139,6 +137,8 @@ func ComputeExecute(ctx *context.Context) {
 	}
 
 	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, config)
+
+	result = result + "\n" + "HTTPS URL: " + cloneLink.HTTPS
 	if err != nil {
 		log.Error("%v", err)
 	}
