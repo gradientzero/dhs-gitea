@@ -106,6 +106,8 @@ func ComputeExecute(ctx *context.Context) {
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
 	gitUrl := cloneLink.HTTPS
 
+	log.Error("HTTPS URL: " + cloneLink.HTTPS)
+
 	gitUser := ctx.Doer.Name
 	tokens, err := org_model.GetOrgGiteaToken(ctx.Repo.Owner.ID)
 	if err != nil {
