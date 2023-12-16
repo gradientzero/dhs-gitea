@@ -107,6 +107,7 @@ func ComputeExecute(ctx *context.Context) {
 	gitUrl := cloneLink.HTTPS
 
 	gitUser := ctx.Doer.Name
+	gitEmail := ctx.Doer.Email
 	tokens, err := org_model.GetOrgGiteaToken(ctx.Repo.Owner.ID)
 	if err != nil {
 		log.Error("%v", err)
@@ -128,16 +129,15 @@ func ComputeExecute(ctx *context.Context) {
 	var config = make(map[string][]org_model.OrgDevpodCredential)
 
 	for _, credential := range credentials {
-		if v, ok := config[credential.Name]; ok {
-			config[credential.Name] = append(v, credential)
+		if v, ok := config[credential.Remote]; ok {
+			config[credential.Remote] = append(v, credential)
 		} else {
 			var lst = []org_model.OrgDevpodCredential{credential}
-			config[credential.Name] = lst
+			config[credential.Remote] = lst
 		}
 	}
 
-	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, config)
-
+	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, gitUser, gitEmail, config)
 	if err != nil {
 		log.Error("%v", err)
 	}

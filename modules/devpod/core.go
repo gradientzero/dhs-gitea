@@ -15,7 +15,9 @@ import (
 // TODO: 2. need to find git credential handling for pushing back
 // not sure concurrent safety for devpod for now
 
-func Execute(privateKey, user, host string, port int32, gitUrl string, config map[string][]org_model.OrgDevpodCredential) (string, error) {
+func Execute(privateKey, user, host string, port int32,
+	gitUrl, gitUser, gitEmail string,
+	config map[string][]org_model.OrgDevpodCredential) (string, error) {
 
 	//gitUrl := "git@gitlab.com:grz1/aqua-research.git" // NOTE: make sure to trim, will get surprise if there is space
 
@@ -80,6 +82,15 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 		}
 	}
 
+	//devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
+	cmd = exec.Command("devpod", "ssh", workSpaceId,
+		"--command", "[ -f dvc-script.sh ] && chmod +x dvc-script.sh && bash dvc-script.sh")
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Error("error when dvc-script.sh run: %v", err)
+	}
+	result += string(output) + "\n"
+
 	//devpod ssh <workspace-id> --command 'dvc pull'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
 	output, err = cmd.CombinedOutput()
@@ -89,7 +100,7 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 	result += string(output) + "\n"
 
 	//devpod ssh <workspace-id> --command 'dvc exp run'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "cd dvclive && dvc exp run")
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Error("error when dvc exp run: %v", err)
@@ -104,11 +115,23 @@ func Execute(privateKey, user, host string, port int32, gitUrl string, config ma
 	}
 	result += string(output) + "\n"
 
+	//devpod ssh <workspace-id> --command 'git config user.name xxx'
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name "+gitUser)
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Error("error when git git config user.name: %v", err)
+	}
+	result += string(output) + "\n"
+
+	//devpod ssh <workspace-id> --command 'git config user.email xxx'
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email "+gitEmail)
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Error("error when git git config user.email: %v", err)
+	}
+	result += string(output) + "\n"
+
 	//devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email git@dhs.detabord.com")
-	cmd.CombinedOutput()
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name \"Gitea User\"")
-	cmd.CombinedOutput()
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
 	output, err = cmd.CombinedOutput()
 	if err != nil {

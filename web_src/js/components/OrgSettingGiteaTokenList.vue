@@ -18,6 +18,9 @@ const sfc = {
     }
   },
   methods: {
+    obfuscate(str) {
+      return '*'.repeat(str.length || 0);
+    },
     deleteToken(event) {
       event.preventDefault();
 
@@ -57,8 +60,9 @@ export function initOrgSettingGiteaTokenList(){
 
         <div class="flex-item-main">
           <div class="flex-item-title">{{token.Name}}</div>
-<!--          <div class="flex-item-body">-->
-<!--          </div>-->
+          <div class="flex-item-body">
+            {{ obfuscate(token.Token) }}
+          </div>
         </div>
 
         <div class="flex-item-trailing">

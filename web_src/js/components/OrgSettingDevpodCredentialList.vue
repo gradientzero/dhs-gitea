@@ -18,6 +18,12 @@ const sfc = {
     }
   },
   methods: {
+    obfuscate(str) {
+      return '*'.repeat(str.length || 0);
+    },
+    editLink(credential){
+      return this.$data.link + '/edit?id=' + credential.ID
+    },
     deleteCredential(event) {
       event.preventDefault();
 
@@ -58,11 +64,14 @@ export function initOrgSettingDevpodCredentialList(){
         <div class="flex-item-main">
           <div class="flex-item-title">{{credential.Name}}</div>
           <div class="flex-item-body">
-            {{credential.Key}} = {{credential.Value}}
+            {{credential.Key}} = {{obfuscate(credential.Value)}}
           </div>
         </div>
 
         <div class="flex-item-trailing">
+          <a :href="editLink(credential)" class="ui tiny button">
+            <SvgIcon name="octicon-pencil" />
+          </a>
           <form class="ui form" :action="deleteLink" method="post" @submit="deleteCredential($event)">
             <input type="hidden" name="_csrf" :value="csrfToken">
             <input name="id" type="hidden" :value="credential.ID">

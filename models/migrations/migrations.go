@@ -555,6 +555,9 @@ var migrations = []Migration{
 
 	// v284 -> v285
 	NewMigration("Add Org devpod credential Table", v1_21.AddOrgDevpodCredentialTable),
+
+	// v285 -> v286
+	NewMigration("Rename devpod credential Name to Remote", v1_21.RenameDevpodCredentialNameToRemote),
 }
 
 // GetCurrentDBVersion returns the current db version

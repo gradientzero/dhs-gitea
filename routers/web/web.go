@@ -905,6 +905,7 @@ func registerRoutes(m *web.Route) {
 				m.Group("/devpod-credential", func() {
 					m.Get("", org.SettingsDevpodCredentialList)
 					m.Methods("GET,POST", "/new", org.SettingsDevpodCredentialCreate)
+					m.Methods("GET,POST", "/edit", org.SettingsDevpodCredentialEdit)
 					m.Post("/delete", org.SettingsDevpodCredentialDelete)
 				})
 

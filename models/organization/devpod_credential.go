@@ -8,14 +8,14 @@ import (
 type OrgDevpodCredential struct {
 	ID          int64              `xorm:"pk autoincr"`
 	OwnerID     int64              `xorm:"INDEX NOT NULL"`
-	Name        string             `xorm:"NOT NULL"`
+	Remote      string             `xorm:"NOT NULL"`
 	Key         string             `xorm:"NOT NULL"`
 	Value       string             `xorm:"NOT NULL"`
 	CreatedUnix timeutil.TimeStamp `xorm:"created"`
 	UpdatedUnix timeutil.TimeStamp `xorm:"updated"`
 }
 
-func AddDevpodCredential(ownerID int64, name, key, value string) error {
+func AddDevpodCredential(ownerID int64, remote, key, value string) error {
 
 	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
@@ -26,7 +26,7 @@ func AddDevpodCredential(ownerID int64, name, key, value string) error {
 
 	devpodCredential := &OrgDevpodCredential{
 		OwnerID: ownerID,
-		Name:    name,
+		Remote:  remote,
 		Key:     key,
 		Value:   value,
 	}
@@ -37,6 +37,42 @@ func AddDevpodCredential(ownerID int64, name, key, value string) error {
 	}
 
 	return committer.Commit()
+}
+
+func UpdateDevpodCredential(ownerID int64, ID int64,
+	remote, key, value string) error {
+
+	ctx, committer, err := db.TxContext(db.DefaultContext)
+	if err != nil {
+		return err
+	}
+
+	defer committer.Close()
+
+	credential := &OrgDevpodCredential{
+		Remote: remote,
+		Key:    key,
+		Value:  value,
+	}
+
+	_, err = db.GetEngine(ctx).ID(ID).
+		Cols("remote", "key", "value").
+		Update(credential)
+
+	return committer.Commit()
+}
+
+func GetDevpodCredentialById(ID int64, ownerID int64) (*OrgDevpodCredential, error) {
+	credential := new(OrgDevpodCredential)
+
+	_, err := db.GetEngine(db.DefaultContext).
+		Where("id = ? AND owner_id = ?", ID, ownerID).
+		Get(credential)
+
+	if err != nil {
+		return nil, err
+	}
+	return credential, nil
 }
 
 func DeleteOrgDevpodCredential(ID int64) error {
