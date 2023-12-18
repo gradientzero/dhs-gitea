@@ -47,6 +47,14 @@
 			{{ctx.Locale.Tr "org.settings.machine"}}
 		</a>
 
+		<a class="{{if .PageIsSettingsGiteaToken}}active {{end}}item" href="{{.OrgLink}}/settings/gitea-token">
+			{{ctx.Locale.Tr "org.settings.gitea_token"}}
+		</a>
+
+		<a class="{{if .PageIsSettingsDevpodCredential}}active {{end}}item" href="{{.OrgLink}}/settings/devpod-credential">
+			{{ctx.Locale.Tr "org.settings.devpod_credential"}}
+		</a>
+
 		<a class="{{if .PageIsSettingsDelete}}active {{end}}item" href="{{.OrgLink}}/settings/delete">
 			{{ctx.Locale.Tr "org.settings.delete"}}
 		</a>

@@ -549,6 +549,15 @@ var migrations = []Migration{
 
 	// v282 -> v283
 	NewMigration("Add Ssh Key to Org Machine Table", v1_21.AddSshKeyToOrgMachineTable),
+
+	// v283 -> v284
+	NewMigration("Add Org gitea token Table", v1_21.AddOrgGiteaTokenTable),
+
+	// v284 -> v285
+	NewMigration("Add Org devpod credential Table", v1_21.AddOrgDevpodCredentialTable),
+
+	// v285 -> v286
+	NewMigration("Rename devpod credential Name to Remote", v1_21.RenameDevpodCredentialNameToRemote),
 }
 
 // GetCurrentDBVersion returns the current db version
