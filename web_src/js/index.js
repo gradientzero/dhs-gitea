@@ -6,6 +6,8 @@ import {initScopedAccessTokenCategories} from './components/ScopedAccessTokenSel
 import {initDashboardRepoList} from './components/DashboardRepoList.vue';
 import {initOrgSettingSshKeyList} from './components/OrgSettingSshKeyList.vue';
 import {initOrgSettingMachineList} from './components/OrgSettingMachineList.vue';
+import {initOrgSettingGiteaTokenList} from './components/OrgSettingGiteaTokenList.vue';
+import {initOrgSettingDevpodCredentialList} from './components/OrgSettingDevpodCredentialList.vue';
 
 import {initGlobalCopyToClipboardListener} from './features/clipboard.js';
 import {initContextPopups} from './features/contextpopup.js';
@@ -89,6 +91,7 @@ import {initRepoDiffCommitBranchesAndTags} from './features/repo-diff-commit.js'
 import {initDirAuto} from './modules/dirauto.js';
 import {initDatasetsBranchChange} from './features/repo-datasets.js';
 import {initExperimentVue} from './features/repo-experiments.js';
+import {initRepoCompute} from './components/RepoCompute.Vue';
 
 // Init Gitea's Fomantic settings
 initGiteaFomantic();
@@ -144,6 +147,8 @@ onDomReady(() => {
 
   initOrgSettingSshKeyList();
   initOrgSettingMachineList();
+  initOrgSettingGiteaTokenList();
+  initOrgSettingDevpodCredentialList();
 
   initRepoActivityTopAuthorsChart();
   initRepoArchiveLinks();
@@ -180,6 +185,7 @@ onDomReady(() => {
   initRepositoryActionView();
   initDatasetsBranchChange();
   initExperimentVue();
+  initRepoCompute();
 
   initCommitStatuses();
   initCaptcha();

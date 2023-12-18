@@ -10,17 +10,21 @@
 
 						<div class="field {{if .Err_Name}}error{{end}}">
 							<label for="name">{{ctx.Locale.Tr "org.settings.ssh_key_name"}}</label>
-							<input id="name" name="key_name" type="text">{{.SshKey.Name}}</input>
+							<input id="name" name="key_name" type="text" placeholder="localhost">{{.SshKey.Name}}</input>
 						</div>
 
 						<div class="field {{if .Err_Public_Key}}error{{end}}">
 							<label for="public_key">{{ctx.Locale.Tr "org.settings.ssh_public_key"}}</label>
-							<textarea id="public_key" name="public_key" rows="10">{{.SshKey.PublicKey}}</textarea>
+							<textarea id="public_key" name="public_key" rows="10" placeholder="-----BEGIN PUBLIC KEY-----
+public key here
+-----END PUBLIC KEY-----">{{.SshKey.PublicKey}}</textarea>
 						</div>
 
 						<div class="field {{if .Err_Private_Key}}error{{end}}">
 							<label for="private_key">{{ctx.Locale.Tr "org.settings.ssh_private_key"}}</label>
-							<textarea id="private_key" name="private_key" rows="10">{{.SshKey.PrivateKey}}</textarea>
+							<textarea id="private_key" name="private_key" rows="10" placeholder="-----BEGIN PRIVATE KEY-----
+secret key here
+-----END PRIVATE KEY-----">{{.SshKey.PrivateKey}}</textarea>
 						</div>
 
 						<button class="ui primary button">

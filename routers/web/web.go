@@ -896,6 +896,19 @@ func registerRoutes(m *web.Route) {
 					m.Post("/delete", org.SettingsMachineDelete)
 				})
 
+				m.Group("/gitea-token", func() {
+					m.Get("", org.SettingsGiteaTokenList)
+					m.Methods("GET,POST", "/new", org.SettingsGiteaTokenCreate)
+					m.Post("/delete", org.SettingsGiteaTokenDelete)
+				})
+
+				m.Group("/devpod-credential", func() {
+					m.Get("", org.SettingsDevpodCredentialList)
+					m.Methods("GET,POST", "/new", org.SettingsDevpodCredentialCreate)
+					m.Methods("GET,POST", "/edit", org.SettingsDevpodCredentialEdit)
+					m.Post("/delete", org.SettingsDevpodCredentialDelete)
+				})
+
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
 
 				m.Group("/packages", func() {
@@ -1344,6 +1357,12 @@ func registerRoutes(m *web.Route) {
 			m.Get("", repo.Models)
 		}, context.RepoRef(), canEnableEditor,
 			reqRepoProjectsReader, repo.MustEnableModels) // TODO: check read permission
+
+		m.Group("/compute", func() {
+			m.Get("", repo.Computes)
+			m.Get("/execute", repo.ComputeExecute)
+		}, context.RepoRef(), canEnableEditor, context.RepoAssignment,
+			reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
 
 		m.Group("/actions", func() {
 			m.Get("", actions.List)

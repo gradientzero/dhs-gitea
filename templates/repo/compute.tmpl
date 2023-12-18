@@ -1,0 +1,26 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository">
+	{{template "repo/header" .}}
+	<div class="ui container">
+	<h2 class="ui dividing header">
+		<div>
+			{{ctx.Locale.Tr "repo.compute"}}
+		</div>
+	</h2>
+
+	{{template "base/alert" .}}
+
+	<script type="module">
+		// Initializing data from template to Vue
+		const data = {
+			canCompute: {{ .CanCompute }},
+			machines:  [{{range .Machines}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
+		}
+		window.config.computeData = data;
+	</script>
+	<!-- Vue mount -->
+	<div id="repo-compute-app" class="ui container"></div>
+
+	</div>
+</div>
+{{template "base/footer" .}}
