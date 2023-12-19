@@ -4,7 +4,12 @@
 	<h4 class="ui top attached header">
 		{{ctx.Locale.Tr "org.settings.gitea_token"}}
 
-		<div class="sub header gt-mt-3">Gitea Token to use on remote machine for clone, push, pull</div>
+		<div class="sub header gt-mt-3" style="padding-right: 8rem">
+			The containers are set up and managed using DevPod.
+			DevPod already provides automatic transmission of specific credentials such as Git or Docker.
+			Moreover, user-specific credentials can be passed on to the containers.
+			For instance, this is where the S3 bucket credentials are specified.
+		</div>
 
 		<div class="ui right">
 			<a href="{{.Link}}/new" class="ui primary tiny toggle button">

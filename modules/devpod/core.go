@@ -1,6 +1,7 @@
 package devpod
 
 import (
+	"bytes"
 	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/modules/log"
 	"fmt"
@@ -82,70 +83,90 @@ func Execute(privateKey, user, host string, port int32,
 		}
 	}
 
-	//devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
 	cmd = exec.Command("devpod", "ssh", workSpaceId,
-		"--command", "[ -f dvc-script.sh ] && chmod +x dvc-script.sh && bash dvc-script.sh")
+		"--command", "export DEVPOD_WORKSPACE_ID="+workSpaceId)
 	output, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Error("error when dvc-script.sh run: %v", err)
+		log.Error("error when export workspace id: %v", err)
 	}
 	result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'dvc pull'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when dvc pull: %v", err)
+	cmd = exec.Command("devpod", "ssh", workSpaceId,
+		"--command", "cat dvc-script.sh")
+	var b bytes.Buffer
+	cmd.Stderr = &b
+	if err := cmd.Start(); err != nil {
+		log.Fatal("%v", err)
 	}
-	result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'dvc exp run'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when dvc exp run: %v", err)
-	}
-	result += string(output) + "\n"
+	// dvc-script.sh content exist
+	if b.String() != "" {
+		//devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
+		cmd = exec.Command("devpod", "ssh", workSpaceId,
+			"--command", "[ -f dvc-script.sh ] && chmod +x dvc-script.sh && bash dvc-script.sh")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when dvc-script.sh run: %v", err)
+		}
+		result += string(output) + "\n"
+	} else {
 
-	//devpod ssh <workspace-id> --command 'git add .'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git add .")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when git add: %v", err)
-	}
-	result += string(output) + "\n"
+		//devpod ssh <workspace-id> --command 'dvc pull'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when dvc pull: %v", err)
+		}
+		result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'git config user.name xxx'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name "+gitUser)
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when git git config user.name: %v", err)
-	}
-	result += string(output) + "\n"
+		//devpod ssh <workspace-id> --command 'dvc exp run'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when dvc exp run: %v", err)
+		}
+		result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'git config user.email xxx'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email "+gitEmail)
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when git git config user.email: %v", err)
-	}
-	result += string(output) + "\n"
+		//devpod ssh <workspace-id> --command 'git add .'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git add .")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when git add: %v", err)
+		}
+		result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when git commit: %v", err)
-	}
-	result += string(output) + "\n"
+		//devpod ssh <workspace-id> --command 'git config user.name xxx'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name "+gitUser)
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when git git config user.name: %v", err)
+		}
+		result += string(output) + "\n"
 
-	//devpod ssh <workspace-id> --command 'git push origin'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git push origin")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Error("error when git push: %v", err)
+		//devpod ssh <workspace-id> --command 'git config user.email xxx'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email "+gitEmail)
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when git git config user.email: %v", err)
+		}
+		result += string(output) + "\n"
+
+		//devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when git commit: %v", err)
+		}
+		result += string(output) + "\n"
+
+		//devpod ssh <workspace-id> --command 'git push origin'
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git push origin")
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Error("error when git push: %v", err)
+		}
+		result += string(output) + "\n"
 	}
-	result += string(output) + "\n"
 
 	//devpod stop <workspace-id>
 	cmd = exec.Command("devpod", "stop", workSpaceId)

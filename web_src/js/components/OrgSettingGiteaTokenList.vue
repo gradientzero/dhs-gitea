@@ -19,7 +19,7 @@ const sfc = {
   },
   methods: {
     obfuscate(str) {
-      return '*'.repeat(str.length || 0);
+      return str.slice(0,5) + '*'.repeat(str.length - 5 || 0);
     },
     deleteToken(event) {
       event.preventDefault();

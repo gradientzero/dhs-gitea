@@ -4,7 +4,12 @@
 				<h4 class="ui top attached header">
 					{{ctx.Locale.Tr "org.settings.ssh_key_form"}}
 
-					<div class="sub header gt-mt-3">Setup SSH Connection for Machine</div>
+					<div class="sub header gt-mt-3" style="padding-right: 8rem;">
+							Creates a public-key pair (ECC/RSA) within your organization.
+						This key pair enables your organization access to the target remote machine via SSH.
+						To accomplish this, insert the public key into <span class="gt-font-semibold">/&lt;user&gt;/.ssh/authorized_keys</span>
+						on the remote machine once, ensuring the remote system acknowledges and authorizes this specific key set.
+					</div>
 
 					<div class="ui right">
 						<a href="{{.Link}}/new" class="ui primary tiny toggle button">
