@@ -19,7 +19,7 @@ const sfc = {
   },
   methods: {
     obfuscate(str) {
-      return '*'.repeat(str.length || 0);
+      return str.slice(0,5) + '*'.repeat(str.length - 5 || 0);
     },
     editLink(credential){
       return this.$data.link + '/edit?id=' + credential.ID
@@ -64,6 +64,7 @@ export function initOrgSettingDevpodCredentialList(){
         <div class="flex-item-main">
           <div class="flex-item-title">{{credential.Name}}</div>
           <div class="flex-item-body">
+            {{credential.Remote}} <br />
             {{credential.Key}} = {{obfuscate(credential.Value)}}
           </div>
         </div>
