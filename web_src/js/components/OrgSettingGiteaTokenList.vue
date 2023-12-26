@@ -74,20 +74,23 @@ export function initOrgSettingGiteaTokenList(){
             </button>
           </form>
         </div>
-
       </div>
-
-<!--      Modal to delete token-->
-      <div class="ui modal" id="token-delete-modal">
-        <div class="header">Gitea Token Delete</div>
-        <div class="content">
-          <p>Are you sure to delete this token?</p>
-        </div>
-        <div class="actions">
-          <div class="ui positive button">Delete</div>
-          <div class="ui negative button">Cancel</div>
-        </div>
-      </div>
-
     </div>
+
+    <!--      Modal to delete token-->
+    <div class="ui modal" id="token-delete-modal">
+      <div class="header">Gitea Token Delete</div>
+      <div class="content">
+        <p>Are you sure to delete this token?</p>
+      </div>
+      <div class="actions">
+        <div class="ui positive button">Delete</div>
+        <div class="ui negative button">Cancel</div>
+    </div>
+  </div>
 </template>
+<style scoped>
+.flex-list > .flex-item:only-child {
+  padding-bottom: 0;
+}
+</style>
