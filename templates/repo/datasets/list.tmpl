@@ -80,10 +80,23 @@
 			</div>
 		</h2>
 		{{ if .Files }}
-		<div class="ui list">
-			{{range $idx, $remote := .Files}}
-			<div class="item">{{svg "octicon-file" 16}}{{StringUtils.Concat "  " .Path " - "}} {{StringUtils.FormatFileSize .Size}}</div>
-			{{end}}
+		<div class="ui attached table segment">
+			<table class="ui very basic striped fixed table single line">
+				<thead>
+					<tr>
+						<th class="center aligned">Name</th>
+						<th class="center aligned">Size</th>
+					</tr>
+				</thead>
+				<tbody>
+				{{range $idx, $remote := .Files}}
+					<tr>
+						<td class="center aligned">{{.Path}}</td>
+						<td class="center aligned">{{StringUtils.FormatFileSize .Size}}</td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
 		</div>
 		{{ else }}
 		<div class="empty center aligned">
