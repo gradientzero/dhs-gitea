@@ -82,33 +82,36 @@ export function initOrgSettingSshKeyList(){
             </button>
           </form>
         </div>
-
       </div>
-
-<!--      Modal to show pubic key-->
-      <div id="ssh-modal" class="ui modal">
-        <div class="header ui">{{selectKey.Name}}</div>
-        <div class="content ui">
-          <p>{{selectKey.PublicKey}}</p>
-        </div>
-        <div class="actions">
-          <button class="ui black deny button">
-            Close
-          </button>
-        </div>
-      </div>
-
-<!--      Modal to delete key-->
-      <div class="ui modal" id="ssh-delete-modal">
-        <div class="header">Ssh Key Delete</div>
-        <div class="content">
-          <p>Are you sure to delete key?</p>
-        </div>
-        <div class="actions">
-          <div class="ui positive button">Delete</div>
-          <div class="ui negative button">Cancel</div>
-        </div>
-      </div>
-
     </div>
+
+  <!--      Modal to show pubic key-->
+  <div id="ssh-modal" class="ui modal">
+    <div class="header ui">{{selectKey.Name}}</div>
+    <div class="content ui">
+      <p>{{selectKey.PublicKey}}</p>
+    </div>
+    <div class="actions">
+      <button class="ui black deny button">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!--      Modal to delete key-->
+  <div class="ui modal" id="ssh-delete-modal">
+    <div class="header">Ssh Key Delete</div>
+    <div class="content">
+      <p>Are you sure to delete key?</p>
+    </div>
+    <div class="actions">
+      <div class="ui positive button">Delete</div>
+      <div class="ui negative button">Cancel</div>
+    </div>
+  </div>
 </template>
+<style scoped>
+.flex-list > .flex-item:only-child {
+  padding-bottom: 0;
+}
+</style>

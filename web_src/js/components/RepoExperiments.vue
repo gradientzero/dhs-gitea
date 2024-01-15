@@ -58,9 +58,9 @@ export default {
       <div class="ui big text loader">Loading...</div>
     </div>
   </div>
-  <div class="ui segment" v-else>
-    <div class="markup content gt-overflow-x-scroll" v-html="experimentHtmlTable"></div>
-  </div>
+
+  <div class="markup content gt-overflow-x-scroll" v-html="experimentHtmlTable" v-else></div>
+
 </template>
 
 <style scoped>
