@@ -1,6 +1,10 @@
 package repo
 
 import (
+	"net/http"
+	"strconv"
+	"strings"
+
 	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
@@ -8,9 +12,6 @@ import (
 	"code.gitea.io/gitea/modules/devpod"
 	"code.gitea.io/gitea/modules/log"
 	"github.com/buildkite/terminal-to-html/v3"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -137,14 +138,30 @@ func ComputeExecute(ctx *context.Context) {
 		}
 	}
 
-	result, err := devpod.Execute(privateKey, user, host, port, gitUrl, gitUser, gitEmail, config)
+	// add header for event stream
+	h := ctx.Resp.Header()
+	h.Set("Content-Type", "text/event-stream")
+	h.Set("Cache-Control", "no-cache")
+	h.Set("Connection", "keep-alive")
+	h.Set("X-Accel-Buffering", "no")
+
+	// send header
+	ctx.Resp.Flush()
+
+	// send stream function
+	var sendStream = func(result string) {
+		output := terminal.Render([]byte(result))
+		ctx.Write([]byte(string(output) + "\n"))
+		ctx.Resp.Flush()
+	}
+
+	err = devpod.Execute(privateKey, user, host, port, gitUrl, gitUser, gitEmail, config, sendStream)
 	if err != nil {
 		log.Error("%v", err)
 	}
 
-	output := terminal.Render([]byte(result))
-	ctx.JSON(http.StatusOK, map[string]any{
-		"machineId": machineId,
-		"result":    string(output),
-	})
+	log.Info("Compute Done ..")
+	ctx.Write([]byte("\nCompute Done..\n"))
+	ctx.Resp.Flush()
+
 }
