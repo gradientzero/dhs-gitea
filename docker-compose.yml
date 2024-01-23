@@ -10,18 +10,39 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-    environment:
-      - USER_UID=1000
-      - USER_GID=1000
-      # See other available environment at https://github.com/go-gitea/gitea/blob/main/contrib/environment-to-ini/README
+    env_file:
+      - .env.docker
     restart: always
     networks:
       - dhs-gitea
     volumes:
-      # The configuration file will be saved at ./gitea-data/gitea/conf/app.ini
-      - ./gitea-data:/data
+      - gitea-data:/var/lib/gitea
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "3000:3000"
       - "222:22"
+    depends_on:
+      - db
+
+  db:
+    container_name: dhs-gitea-db-mysql
+    image: mysql:8.3.0
+    restart: always 
+    env_file:
+      - .env.docker
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - db-init:/docker-entrypoint-initdb.d
+    networks:
+      - dhs-gitea
+
+volumes:
+  gitea-data:
+    driver: local
+  db-data:
+    driver: local
+  db-init:
+    driver: local
