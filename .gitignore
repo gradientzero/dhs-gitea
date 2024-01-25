@@ -110,3 +110,6 @@ prime/
 
 # Manpage
 /man
+
+# Ignore env file docker
+.env.docker
