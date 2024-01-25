@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 
 networks:
   dhs-gitea:
@@ -6,10 +6,8 @@ networks:
 
 services:
   server:
-    container_name: dhs-gitea-server
-    build:
-      dockerfile: Dockerfile
-      context: .
+    image: gradient0/dhs-gitea:${IMAGE_TAG_DHS_GITEA:-latest}
+    container_name: dhs-gitea-${TENANT:-default}-server
     env_file:
       - .env.docker
     restart: always
@@ -20,14 +18,14 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - "3000:3000"
-      - "222:22"
+      - ${GITEA_PORT:-3000}:3000
+      - ${SSH_PORT:-222}:22
     depends_on:
       - db
 
   db:
-    container_name: dhs-gitea-db-mysql
     image: mysql:8.3.0
+    container_name: dhs-gitea-db-${TENANT:-default}-mysql
     restart: always 
     env_file:
       - .env.docker
