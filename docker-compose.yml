@@ -9,7 +9,7 @@ services:
     image: gradient0/dhs-gitea:${IMAGE_TAG_DHS_GITEA:-latest}
     container_name: dhs-gitea-${TENANT:-default}-server
     env_file:
-      - .env.docker
+      - ./stack.env
     restart: always
     networks:
       - dhs-gitea
@@ -28,9 +28,9 @@ services:
     container_name: dhs-gitea-db-${TENANT:-default}-mysql
     restart: always 
     env_file:
-      - .env.docker
+      - ./stack.env
     ports:
-      - "3306:3306"
+      - ${MYSQL_EXPOSE_PORT:-3306}:3306
     volumes:
       - db-data:/var/lib/mysql
       - db-init:/docker-entrypoint-initdb.d
