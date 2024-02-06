@@ -1,15 +1,15 @@
 package repo
 
 import (
+	"fmt"
+	"net/http"
+
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/forms"
-	"fmt"
-	"net/http"
-	"slices"
 )
 
 const (
@@ -42,13 +42,11 @@ func Datasets(ctx *context.Context) {
 	ctx.Data["RemoteLink"] = ctx.Repo.Repository.Link() + "/datasets/remote"
 	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
 
-	branches, err := findBranches(ctx)
-
 	branch := ctx.Req.URL.Query().Get("branch")
-	if branch != "" && slices.Contains(branches, branch) {
+
+	// change with IsBranchExist method to check branch is valid or exists
+	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
-	} else {
-		branch = ctx.Repo.BranchName // reset default branch name
 	}
 
 	remotes, err := dvc.RemoteList(ctx)
@@ -57,8 +55,8 @@ func Datasets(ctx *context.Context) {
 		errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
 		ctx.Flash.Error(errorMsg, true)
 	}
-	ctx.Data["Branches"] = branches
-	ctx.Data["Branch"] = branch
+	// Set branch active or selected branch
+	ctx.Data["BranchName"] = ctx.Repo.BranchName
 	ctx.Data["RemoteList"] = remotes
 
 	files, err := dvc.FileList(ctx)

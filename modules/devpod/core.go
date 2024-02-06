@@ -21,7 +21,7 @@ import (
 // not sure concurrent safety for devpod for now
 
 func Execute(privateKey, user, host string, port int32,
-	gitUrl, gitUser, gitEmail string,
+	gitUrl, gitBranch, gitUser, gitEmail, gitToken string,
 	config map[string][]org_model.OrgDevpodCredential,
 	sendStream func(string),
 ) error {
@@ -30,6 +30,18 @@ func Execute(privateKey, user, host string, port int32,
 
 	providerId := xid.New().String()
 	workSpaceId := xid.New().String()
+
+	// git credential handling
+	// if gitToken is available then create git credential file and set it
+	if gitToken != "" {
+		log.Info("Creating git creds for devpod: %v", workSpaceId)
+		g := NewGitCredential(workSpaceId, gitUser, gitToken)
+		err := g.Set()
+		if err != nil {
+			log.Error("Failing creating git creds file: %v", err)
+		}
+		defer g.Remove()
+	}
 
 	// setting up private key for use
 	privateKeyFile := "/tmp/" + providerId + ".key"
@@ -64,8 +76,9 @@ func Execute(privateKey, user, host string, port int32,
 		log.Error("Failing to add provider: %v", err)
 	}
 
-	// devpod up --provider <provider-id> <git-url> --ide none --debug --id <workspace-id>
-	cmd = exec.Command("devpod", "up", gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
+	// add branch to gitUrl
+	gitUrl = gitUrl + "@" + gitBranch
+	cmd = exec.Command("devpod", "up", workSpaceId, "--source=git:"+gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {
 		log.Error("Failing to up devpod: %v", err)
@@ -234,4 +247,113 @@ func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	}
 
 	return nil
+}
+
+// GitCredential is a struct to handle git credentials with access token for private repository
+// every git credential will be stored in a file as tmp and removed after use
+// it also set environment variables for username and token & remove after use
+// it also set git config credential.helper and remove after use
+
+// why we need this?
+//   - To access private repository gitea
+//   - DevPod not support if use git clone with username and password in url and custom branch
+//     Example use url not support for devpod:
+//     ```devpod up http://username:xxxxxxxx@gitea.host@branch --provider providerId --ide none --id workSpaceId```
+//     this will not work for devpod
+//   - DevPod will forward git credentials to a remote machine so that you can also pull private repositories.
+
+type GitCredential struct {
+	Username      string
+	Token         string
+	WokSpaceId    string
+	envUser       string
+	envToken      string
+	scriptPath    string
+	scriptContent string
+}
+
+// NewGitCredential creates a new GitCredential with the given workspace ID, username, and token.
+//
+// Parameters:
+// - WokSpaceId string
+// - username string
+// - token string
+// Return type: *GitCredential
+func NewGitCredential(WokSpaceId, username, token string) *GitCredential {
+	g := &GitCredential{
+		Username:   username,
+		Token:      token,
+		WokSpaceId: WokSpaceId,
+	}
+	g.Init()
+	return g
+}
+
+// Init initializes the GitCredential.
+//
+// No parameters.
+// No return type.
+func (g *GitCredential) Init() {
+	// set environment variables
+	g.envUser = "GIT_USER_" + g.WokSpaceId
+	g.envToken = "GIT_TOKEN_" + g.WokSpaceId
+
+	// create a file to store the script
+	tmpDir := os.TempDir()
+	g.scriptPath = tmpDir + "/git_creds_" + g.WokSpaceId + ".sh"
+
+	// script content to store in file
+	g.scriptContent = fmt.Sprintf(`#!/bin/bash
+sleep 1
+echo username=$%s
+echo password=$%s
+`, g.envUser, g.envToken)
+}
+
+// Set writes the git credentials to a file, sets up the git config, and sets environment variables.
+//
+// Returns an error.
+func (g *GitCredential) Set() error {
+	// create a file to store the script
+	err := os.WriteFile(g.scriptPath, []byte(g.scriptContent), 0600)
+	if err != nil {
+		log.Error("Failing creating git creds file: %v", err)
+		return err
+	}
+
+	// execute: git config --global credential.helper "/bin/bash /tmp/git_creds_<workspaceid>.sh"
+	cmd := exec.Command("git", "config", "--global", "credential.helper", "/bin/bash "+g.scriptPath)
+	if err := cmd.Run(); err != nil {
+		log.Error("Failing to set git creds: %v", err)
+		return err
+	}
+
+	// set environment variables
+	os.Setenv(g.envUser, g.Username)
+	os.Setenv(g.envToken, g.Token)
+
+	return nil
+}
+
+// Remove removes environment variables, git creds file from tmp, and git config credential.helper.
+//
+// No parameters.
+// Returns an error.
+func (g *GitCredential) Remove() error {
+	// remove environment variables
+	os.Unsetenv(g.envUser)
+	os.Unsetenv(g.envToken)
+
+	// remove git creds file from tmp
+	err := os.Remove(g.scriptPath)
+	if err != nil {
+		log.Error("Failing to remove git creds file: %v", err)
+	}
+	// remove git config credential.helper
+	// execute: git config --global --unset credential.helper
+	err = exec.Command("git", "config", "--global", "--unset", "credential.helper").Run()
+	if err != nil {
+		log.Error("Failing to remove git creds file: %v", err)
+	}
+	return err
 }

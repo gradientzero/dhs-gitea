@@ -14,13 +14,12 @@
 {{/*			<div class="gt-p-3">*/}}
 {{/*				<a class="ui small primary button gt-text-right" href="{{.Link}}">Create</a>*/}}
 {{/*			</div>*/}}
-			<div class="gt-p-3">
-				<select id="dataset-branch" class="ui fluid dropdown" >
-					{{range $idx, $branch := .Branches}}
-					<option value="{{.}}" {{if eq $.Branch .}}selected{{end}}>{{.}}</option>
-					{{end}}
-				</select>
-			</div>
+
+			<!-- Dropdown select branch -->
+			{{template "repo/branch_dropdown" dict "root" .
+				"noTag" true 
+				"disableCreateBranch" true
+				"branchURLPrefix"  "datasets?branch="}}
 		</h2>
 
 		{{template "base/alert" .}}

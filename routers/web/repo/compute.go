@@ -3,7 +3,6 @@ package repo
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/repo"
@@ -70,6 +69,13 @@ func Computes(ctx *context.Context) {
 		return
 	}
 
+	// change with IsBranchExist method to check branch is valid or exists
+	branch := ctx.Req.URL.Query().Get("branch")
+	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
+		ctx.Repo.BranchName = branch
+	}
+
+	ctx.Data["BranchName"] = ctx.Repo.BranchName
 	ctx.Data["CanCompute"] = true
 	ctx.Data["Machines"] = machines
 
@@ -84,6 +90,13 @@ func ComputeExecute(ctx *context.Context) {
 	parseId, err := strconv.ParseInt(machineId, 10, 64)
 	if err != nil {
 		log.Error("Invalid machine Id")
+	}
+
+	// branch must be valid
+	gitBranch := ctx.Req.URL.Query().Get("branch")
+	if ctx.Repo.GitRepo.IsBranchExist(gitBranch) == false {
+		log.Error("Invalid branch")
+		return
 	}
 
 	// TODO: validate machine id
@@ -119,9 +132,6 @@ func ComputeExecute(ctx *context.Context) {
 		gitToken = tokens[0].Token
 	}
 
-	gitUrl = strings.Replace(gitUrl, "://", "://"+gitUser+":"+gitToken+"@", 1)
-	//gitUrl = "http://adminadmin:d718e5fe99591411878cc8b031d5f70c9481871f@gitea.local:3000/org-1/aqua-research.git"
-
 	credentials, err := org_model.GetOrgDevpodCredential(ctx.Repo.Owner.ID)
 	if err != nil {
 		log.Error("%v", err)
@@ -155,7 +165,7 @@ func ComputeExecute(ctx *context.Context) {
 		ctx.Resp.Flush()
 	}
 
-	err = devpod.Execute(privateKey, user, host, port, gitUrl, gitUser, gitEmail, config, sendStream)
+	err = devpod.Execute(privateKey, user, host, port, gitUrl, gitBranch, gitUser, gitEmail, gitToken, config, sendStream)
 	if err != nil {
 		log.Error("%v", err)
 	}

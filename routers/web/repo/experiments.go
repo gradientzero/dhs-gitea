@@ -1,12 +1,13 @@
 package repo
 
 import (
+	"net/http"
+	"slices"
+
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
-	"net/http"
-	"slices"
 )
 
 const (
@@ -34,20 +35,14 @@ func Experiments(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.experiments")
 	ctx.Data["IsExperimentPage"] = true // to show highlight in tab
 
-	branches, err := findBranches(ctx)
-	if err != nil {
-		log.Error("err when finding branches: %v", err)
-	}
-
 	branch := ctx.Req.URL.Query().Get("branch")
-	if branch != "" && slices.Contains(branches, branch) {
+	// change with IsBranchExist method to check branch is valid or exists
+	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
-	} else {
-		branch = ctx.Repo.BranchName // reset default branch name
 	}
 
-	ctx.Data["Branches"] = branches
-	ctx.Data["Branch"] = branch
+	// Set branch active or selected branch
+	ctx.Data["BranchName"] = ctx.Repo.BranchName
 
 	ctx.HTML(http.StatusOK, tplExperimentsList)
 }
