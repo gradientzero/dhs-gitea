@@ -17,6 +17,12 @@ type OrgMachine struct {
 	UpdatedUnix timeutil.TimeStamp `xorm:"updated"`
 }
 
+// RegisterModel OrgMachine for migration medel when fresh install of Gitea
+// if not registering the model here, the table model will not be created in the database on fresh install
+func init() {
+	db.RegisterModel(new(OrgMachine))
+}
+
 // AddMachine adds machine to database
 func AddMachine(ownerID int64, name, user, host string, port int32, sshKey int64) error {
 

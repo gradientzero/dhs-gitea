@@ -15,6 +15,12 @@ type OrgGiteaToken struct {
 	Verified    bool               `xorm:"NOT NULL DEFAULT false"`
 }
 
+// RegisterModel OrgGiteaToken for migration medel when fresh install of Gitea
+// if not registering the model here, the table model will not be created in the database on fresh install
+func init() {
+	db.RegisterModel(new(OrgGiteaToken))
+}
+
 func AddGiteaToken(ownerID int64, name, token string) error {
 
 	ctx, committer, err := db.TxContext(db.DefaultContext)

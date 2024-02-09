@@ -18,6 +18,12 @@ type OrgSshKey struct {
 	Verified    bool               `xorm:"NOT NULL DEFAULT false"`
 }
 
+// RegisterModel OrgSshKey for migration medel when fresh install of Gitea
+// if not registering the model here, the table model will not be created in the database on fresh install
+func init() {
+	db.RegisterModel(new(OrgSshKey))
+}
+
 // AddSshKey adds ssh key to database
 func AddSshKey(ownerID int64, name string, publicKey string, privateKey string) error {
 
