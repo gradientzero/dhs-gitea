@@ -1,5 +1,5 @@
-#Build stage
-FROM docker.io/library/golang:1.21-alpine3.18 AS build-env
+# Build stage
+FROM golang:1.21 AS build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -9,49 +9,79 @@ ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS "bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
 
-#Build deps
-RUN apk --no-cache add build-base git nodejs npm
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y build-essential git nodejs npm
 
-#Setup repo
-COPY . ${GOPATH}/src/code.gitea.io/gitea
-WORKDIR ${GOPATH}/src/code.gitea.io/gitea
+# Setup repository
+COPY . /go/src/code.gitea.io/gitea
+WORKDIR /go/src/code.gitea.io/gitea
 
-#Checkout version if set
+# Checkout version if set
 RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
  && make clean-all build
 
 # Begin env-to-ini build
 RUN go build contrib/environment-to-ini/environment-to-ini.go
 
-FROM docker.io/library/alpine:3.18
+# Final stage
+FROM debian:bookworm
 LABEL maintainer="maintainers@gitea.io"
+ENV DEBIAN_FRONTEND=noninteractive 
 
 EXPOSE 22 3000
 
-RUN apk --no-cache add \
+# Install necessary packages
+RUN apt-get update -y && \
+    apt-get install -y \
+    wget \
+    gpg \
+    dumb-init \
     bash \
     ca-certificates \
     curl \
     gettext \
     git \
-    linux-pam \
-    openssh \
+    libpam0g-dev \
+    openssh-server \
     s6 \
-    sqlite \
-    su-exec \
-    gnupg
+    sqlite3 \
+    sudo \
+    gnupg \
+    python3 \
+    python3-setuptools \
+    python3-pip
 
-RUN addgroup \
-    -S -g 1000 \
-    git && \
-  adduser \
-    -S -H -D \
-    -h /data/git \
-    -s /bin/bash \
-    -u 1000 \
-    -G git \
-    git && \
-  echo "git:*" | chpasswd -e
+# Install devpod
+RUN curl -L -o devpod "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64" && install -c -m 0755 devpod /usr/local/bin && rm -f devpod
+
+# Install dvc and gto
+RUN pip3 install --break-system-packages dvc[all] gto
+
+# Install su-exec
+RUN  set -ex; \
+     \
+     curl -o /usr/local/bin/su-exec.c https://raw.githubusercontent.com/ncopa/su-exec/master/su-exec.c; \
+     \
+     fetch_deps='gcc libc-dev'; \
+     apt-get update; \
+     apt-get install -y --no-install-recommends $fetch_deps; \
+     rm -rf /var/lib/apt/lists/*; \
+     gcc -Wall \
+         /usr/local/bin/su-exec.c -o/usr/local/bin/su-exec; \
+     chown root:root /usr/local/bin/su-exec; \
+     chmod 0755 /usr/local/bin/su-exec; \
+     rm /usr/local/bin/su-exec.c; \
+     \
+     apt-get purge -y --auto-remove $fetch_deps
+
+# Create git user
+RUN addgroup --gid 1000 git && \
+    adduser --system --uid 1000 --ingroup git --home /data/git --shell /bin/bash git && \
+    echo "git:*" | chpasswd
+
+# Setup ssh 
+RUN mkdir -p /var/run/sshd
 
 ENV USER git
 ENV GITEA_CUSTOM /data/gitea

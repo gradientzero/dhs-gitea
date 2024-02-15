@@ -112,4 +112,4 @@ prime/
 /man
 
 # Ignore env file docker
-.env.docker
+stack.env
