@@ -144,3 +144,17 @@ server {
 }
 
 ```
+
+### Build docker 
+For build image latest and with specified version:
+- docker build -t gradient0/dhs-gitea:latest -t gradient0/dhs-gitea:<$version> .
+
+### Push image to docker hub
+To push image to registry docker hub, you need to log in to Docker Hub first and then push, with the following command:
+- docker login
+- docker push gradient0/dhs-gitea:latest 
+- docker push gradient0/dhs-gitea:{$version}
+
+### Deploy with docker compose
+For deploy with docker compose, you need to create `stack.env` file and change environment needed, you can check `stack.env.example` file for example, with the following command to run docker compose:
+- docker-compose up

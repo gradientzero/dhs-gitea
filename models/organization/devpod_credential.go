@@ -15,6 +15,12 @@ type OrgDevpodCredential struct {
 	UpdatedUnix timeutil.TimeStamp `xorm:"updated"`
 }
 
+// RegisterModel OrgDevpodCredential for migration medel when fresh install of Gitea
+// if not registering the model here, the table model will not be created in the database on fresh install
+func init() {
+	db.RegisterModel(new(OrgDevpodCredential))
+}
+
 func AddDevpodCredential(ownerID int64, remote, key, value string) error {
 
 	ctx, committer, err := db.TxContext(db.DefaultContext)
