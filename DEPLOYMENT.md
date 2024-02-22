@@ -1,38 +1,96 @@
-## Gitea Deployment Process on the server
+# Deployment with docker-compose and portainer (preferred way)
+We use portainer to deploy new Sandbox instances. Here we find the instructions for setting up portainer and a short guide on how to start new instances with portainer.
+
+TODO: Add instructions for setting up portainer and deploying new instances.
 
 
-### Install go 1.21.x
+# Deployment with docker-compose and without portainer
+We usually use portainer to deploy new instances. However, if you want to set up a new sandbox instance (dhs-gitea), you can follow this section and set up a new independent instance using docker compose.
+
+
+## Build configuration
+On MacOS Docker Desktop ensure "Allow privileged port mapping" is checked in the Docker Desktop settings. This allows the container to bind to port 22 or any other port below 1024.
+
+## Build docker
+For build image latest and with specified version:
+
+```bash
+docker build -t gradient0/dhs-gitea:latest -t gradient0/dhs-gitea:<$version> .
+```
+
+## Push image to docker hub
+To push image to registry docker hub, you need to log in to Docker Hub first and then push, with the following command:
+
+```bash
+docker login --username gradient0
+# 1password
+
+docker push gradient0/dhs-gitea:latest
+docker push gradient0/dhs-gitea:{$version}
+```
+
+## Copy data to remote machine
+
+Prepare environment variables:
+```bash
+cp stack.env.example stack.env
+```
+
+Copy the following files to the destination server:
+
+```bash
+- docker-compose.yml
+- stack.env
+```
+
+```bash
+scp docker-compose.yml stack.env root@dhs.detabord.com:/home/user/dhs
+```
+
+## Deploy with docker compose
+For deploy with docker compose, you need to create `stack.env` file and change environment needed, you can check `stack.env.example` file for example, with the following command to run docker compose:
+
+```bash
+docker compose -f docker-compose.yml -p <my-project-name>--env-file stack.env up
+```
+
+
+
+# Deployment without docker-compose and without portainer (bare-metal)
+
+
+## Install go 1.21.x
 - cd ~
 - curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz
 - sudo tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz
 - echo ‘export PATH=$PATH:/usr/local/go/bin’ > ~/.profile
 - source ~/.profile
 
-### Install mysql
+## Install mysql
 - sudo apt update
 - sudo apt install mysql-server
 - sudo systemctl start mysql.service
 
-### Create mysql user and db
+## Create mysql user and db
 - ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 - CREATE DATABASE gitea;
 
-### Create system user “dev”
+## Create system user “dev”
 - sudo adduser dev
 - sudo usermod -aG sudo dev
 
-### Clone dhs_gitea repo inside /home/dev folder
+## Clone dhs_gitea repo inside /home/dev folder
 
-### Build go application
+## Build go application
 - TAGS="bindata" make build
 
-### Set system service
+## Set system service
 - sudo nano /lib/systemd/system/gitea.service
 - Copy following code inside the file.
 
 ```
 [Unit]
-Description=gitea    
+Description=gitea
 
 [Service]
 Type=simple
@@ -46,7 +104,7 @@ WantedBy=multi-user.target
 ```
 - sudo service gitea start
 
-### Install nginx
+## Install nginx
 
 - sudo apt update
 - sudo apt install nginx
@@ -69,11 +127,11 @@ server {
 - sudo service nginx restart
 
 
-### Install gitea
+## Install gitea
 - Open http://<server_ip> from browser
 - Configure db credentials on the page and install.
 
-### Protect signup with basic auth
+## Protect signup with basic auth
 - sudo apt install apache2-utils
 - htpasswd -c /etc/nginx/conf.d/.htpasswd admin
 - Chage nginx config like following
@@ -98,7 +156,7 @@ server {
 }
 ```
 
-### Install TLS with letsencrypt
+## Install TLS with letsencrypt
 - apt install snapd
 - snap install --classic certbot
 - certbot --nginx -d dhs.detabord.com
@@ -144,17 +202,3 @@ server {
 }
 
 ```
-
-### Build docker 
-For build image latest and with specified version:
-- docker build -t gradient0/dhs-gitea:latest -t gradient0/dhs-gitea:<$version> .
-
-### Push image to docker hub
-To push image to registry docker hub, you need to log in to Docker Hub first and then push, with the following command:
-- docker login
-- docker push gradient0/dhs-gitea:latest 
-- docker push gradient0/dhs-gitea:{$version}
-
-### Deploy with docker compose
-For deploy with docker compose, you need to create `stack.env` file and change environment needed, you can check `stack.env.example` file for example, with the following command to run docker compose:
-- docker-compose up

@@ -113,3 +113,4 @@ prime/
 
 # Ignore env file docker
 stack.env
+docker-compose-dev.yml
