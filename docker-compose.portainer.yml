@@ -5,8 +5,8 @@ services:
     image: portainer/portainer-ce:${PORTAINER_VERSION:-latest}
     container_name: portainer-${TENANT:-default}
     ports:
-      - "${PORTAINER_TUNNEL_PORT:-8000}:8000"
-      - "${PORTAINER_HTTPS_PORT:-9443}:9443"
+      - "127.0.0.1:${PORTAINER_TUNNEL_PORT:-8000}:8000"
+      - "127.0.0.1:${PORTAINER_HTTPS_PORT:-9443}:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
