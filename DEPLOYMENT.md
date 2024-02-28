@@ -1,10 +1,19 @@
 # Deployment with docker-compose and portainer (preferred way)
 We use portainer to deploy new Sandbox instances. Here we find the instructions for setting up portainer and a short guide on how to start new instances with portainer.
 
+The structure would then look like this:
+- remote machine
+-- portainer
+--- dhs-gitea-001
+--- dhs-gitea-002
+--- ...
+
+Portainer can also manage dhs-gitea instances outside of its own server, but that's out of scope for now.
+
 ## Build configuration
 On MacOS Docker Desktop ensure "Allow privileged port mapping" is checked in the Docker Desktop settings. This allows the container to bind to port 22 or any other port below 1024.
 
-## Build docker
+## Build docker (dhs-gitea)
 For build image latest and with specified version:
 
 ```bash
@@ -32,6 +41,7 @@ Copy the following files to the destination server:
 
 ```bash
 - docker-compose.yml
+- docker-compose.portainer.yml
 - stack.env
 ```
 
@@ -39,16 +49,22 @@ Copy the following files to the destination server:
 scp docker-compose.yml docker-compose.portainer.yml stack.env root@dhs.detabord.com:/home/user/dhs
 ```
 
-## Install Portainer Server
+## Run portainer service
 
-Install Portainer server with docker-compose
+Run portainer service with docker-compose:
+
 ```bash
 $ docker-compose -f docker-compose.portainer.yml up -d
 ```
-Portainer Server has now been installed. You can check to see whether the Portainer Server container has started by running
+
+You can check to see whether the portainer service is running with following:
+
 ```bash
-$ docker ps
+$ docker-compose ls
 ```
+
+### Setup portainer to manage dhs-gitea instances
+
 Now that the installation is complete, you can log into your Portainer Server instance by opening a web browser and going to: https://localhost:9443 and then create the first user for initial setup and follow instruction
 
 ## Add Environment
