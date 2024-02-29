@@ -3,7 +3,7 @@ version: '3.8'
 services:
   portainer:
     image: portainer/portainer-ce:${PORTAINER_VERSION:-latest}
-    container_name: portainer-${TENANT:-default}
+    container_name: portainer
     ports:
       - "127.0.0.1:${PORTAINER_TUNNEL_PORT:-8000}:8000"
       - "127.0.0.1:${PORTAINER_HTTPS_PORT:-9443}:9443"
