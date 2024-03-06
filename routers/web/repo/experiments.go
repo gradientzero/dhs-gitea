@@ -36,13 +36,19 @@ func Experiments(ctx *context.Context) {
 	ctx.Data["IsExperimentPage"] = true // to show highlight in tab
 
 	branch := ctx.Req.URL.Query().Get("branch")
+	tag := ctx.Req.URL.Query().Get("tag")
 	// change with IsBranchExist method to check branch is valid or exists
 	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
+	} else if tag != "" && ctx.Repo.GitRepo.IsTagExist(tag) {
+		ctx.Repo.TagName = tag
+		ctx.Repo.IsViewTag = true
 	}
 
 	// Set branch active or selected branch
 	ctx.Data["BranchName"] = ctx.Repo.BranchName
+	ctx.Data["TagName"] = ctx.Repo.TagName
+	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 
 	ctx.HTML(http.StatusOK, tplExperimentsList)
 }

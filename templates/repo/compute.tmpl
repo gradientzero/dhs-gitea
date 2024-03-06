@@ -8,9 +8,9 @@
 			</div>
 			<!-- Dropdown select branch -->
 			{{template "repo/branch_dropdown" dict "root" .
-				"noTag" true 
 				"disableCreateBranch" true
-				"branchURLPrefix"  "compute?branch="}}
+				"branchURLPrefix"  "compute?branch="
+				"tagURLPrefix" "compute?tag="}}
 		</h2>
 
 		{{template "base/alert" .}}

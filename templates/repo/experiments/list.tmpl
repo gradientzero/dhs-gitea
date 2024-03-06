@@ -14,12 +14,12 @@
 			<div>
 				{{ctx.Locale.Tr "repo.experiments.list"}}
 			</div>
-			
+
 			<!-- Dropdown select branch -->
 			{{template "repo/branch_dropdown" dict "root" .
-				"noTag" true 
 				"disableCreateBranch" true
-				"branchURLPrefix"  "experiments?branch="}}
+				"branchURLPrefix"  "experiments?branch="
+				"tagURLPrefix" "experiments?tag="}}
 		</h2>
 		<!-- Vue mount -->
 		<div id="experiment-app"></div>

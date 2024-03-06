@@ -43,10 +43,14 @@ func Datasets(ctx *context.Context) {
 	ctx.Data["IsDatasetPage"] = true // to show highlight in tab
 
 	branch := ctx.Req.URL.Query().Get("branch")
+	tag := ctx.Req.URL.Query().Get("tag")
 
 	// change with IsBranchExist method to check branch is valid or exists
 	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
+	} else if tag != "" && ctx.Repo.GitRepo.IsTagExist(tag) {
+		ctx.Repo.TagName = tag
+		ctx.Repo.IsViewTag = true
 	}
 
 	remotes, err := dvc.RemoteList(ctx)
@@ -57,6 +61,8 @@ func Datasets(ctx *context.Context) {
 	}
 	// Set branch active or selected branch
 	ctx.Data["BranchName"] = ctx.Repo.BranchName
+	ctx.Data["TagName"] = ctx.Repo.TagName
+	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 	ctx.Data["RemoteList"] = remotes
 
 	files, err := dvc.FileList(ctx)

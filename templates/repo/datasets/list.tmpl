@@ -17,9 +17,9 @@
 
 			<!-- Dropdown select branch -->
 			{{template "repo/branch_dropdown" dict "root" .
-				"noTag" true 
 				"disableCreateBranch" true
-				"branchURLPrefix"  "datasets?branch="}}
+				"branchURLPrefix"  "datasets?branch="
+				"tagURLPrefix" "datasets?tag="}}
 		</h2>
 
 		{{template "base/alert" .}}

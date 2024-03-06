@@ -298,6 +298,17 @@ func executeTempRepo(ctx *context.Context, execute func(string, *git.Repository)
 
 	repoPath := ctx.Repo.GitRepo.Path
 	branchName := ctx.Repo.BranchName
+	tagName := ctx.Repo.TagName
+
+	refName := ""
+	prefix := ""
+	if tagName != "" {
+		refName = tagName
+		prefix = "refs/tags"
+	} else {
+		refName = branchName
+		prefix = "refs/heads"
+	}
 
 	tempRepoPath, err := repo_module.CreateTemporaryPath("dataset")
 	if err != nil {
@@ -311,11 +322,11 @@ func executeTempRepo(ctx *context.Context, execute func(string, *git.Repository)
 		}
 	}()
 
-	log.Info("git clone %s %s %s", repoPath, branchName, tempRepoPath)
+	log.Info("git clone %s %s %s", repoPath, refName, tempRepoPath)
 	repo, err := git.PlainClone(tempRepoPath, false, &git.CloneOptions{
 		URL: repoPath,
 		// Ref: https://github.com/src-d/go-git/issues/553
-		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branchName)),
+		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("%s/%s", prefix, refName)),
 		SingleBranch:  true,
 	})
 
