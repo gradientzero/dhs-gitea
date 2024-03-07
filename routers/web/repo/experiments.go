@@ -2,7 +2,6 @@ package repo
 
 import (
 	"net/http"
-	"slices"
 
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
@@ -54,17 +53,14 @@ func Experiments(ctx *context.Context) {
 }
 
 func ExperimentTable(ctx *context.Context) {
-
-	branches, err := findBranches(ctx)
-	if err != nil {
-		log.Error("err when finding branches: %v", err)
-	}
-
 	branch := ctx.Req.URL.Query().Get("branch")
-	if branch != "" && slices.Contains(branches, branch) {
+	tag := ctx.Req.URL.Query().Get("tag")
+
+	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
-	} else {
-		branch = ctx.Repo.BranchName // reset default branch name
+	} else if tag != "" && ctx.Repo.GitRepo.IsTagExist(tag) {
+		ctx.Repo.TagName = tag
+		ctx.Repo.IsViewTag = true
 	}
 
 	html, err := dvc.ExperimentHtml(ctx)

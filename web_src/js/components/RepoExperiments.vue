@@ -6,12 +6,13 @@ export default {
     return {
       loading: true,
       selectedBranch: window.config.experimentData.selectedBranch,
+      selectedTag: window.config.experimentData.selectedTag,
       experimentHtmlTable: "",
     };
   },
   mounted() {
     // fetch html markup table
-    const url = `${window.location.pathname}/table?branch=${this.selectedBranch}`;
+    const url = this.selectedTag ? `${window.location.pathname}/table?tag=${this.selectedTag}` : `${window.location.pathname}/table?branch=${this.selectedBranch}`;
     GET(url)
       .then((res) => res.json())
       .then((json) => {
