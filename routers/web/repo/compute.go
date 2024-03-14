@@ -71,11 +71,18 @@ func Computes(ctx *context.Context) {
 
 	// change with IsBranchExist method to check branch is valid or exists
 	branch := ctx.Req.URL.Query().Get("branch")
+	tag := ctx.Req.URL.Query().Get("tag")
+
 	if branch != "" && ctx.Repo.GitRepo.IsBranchExist(branch) {
 		ctx.Repo.BranchName = branch
+	} else if tag != "" && ctx.Repo.GitRepo.IsTagExist(tag) {
+		ctx.Repo.TagName = tag
+		ctx.Repo.IsViewTag = true
 	}
 
 	ctx.Data["BranchName"] = ctx.Repo.BranchName
+	ctx.Data["TagName"] = ctx.Repo.TagName
+	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 	ctx.Data["CanCompute"] = true
 	ctx.Data["Machines"] = machines
 
@@ -94,8 +101,13 @@ func ComputeExecute(ctx *context.Context) {
 
 	// branch must be valid
 	gitBranch := ctx.Req.URL.Query().Get("branch")
-	if ctx.Repo.GitRepo.IsBranchExist(gitBranch) == false {
+	tag := ctx.Req.URL.Query().Get("tag")
+
+	if gitBranch != "" && !ctx.Repo.GitRepo.IsBranchExist(gitBranch) {
 		log.Error("Invalid branch")
+		return
+	} else if tag != "" && !ctx.Repo.GitRepo.IsTagExist(tag) {
+		log.Error(("Invalid tag"))
 		return
 	}
 

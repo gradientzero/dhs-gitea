@@ -20,7 +20,8 @@
 			const data = {
 				canCompute: {{ .CanCompute }},
 				machines:  [{{range .Machines}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
-				branch: '{{ .BranchName }}'
+				branch: '{{ .BranchName }}',
+				tag: '{{ .TagName }}'
 			}
 			window.config.computeData = data;
 		</script>
