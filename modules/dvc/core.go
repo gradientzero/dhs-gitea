@@ -2,19 +2,20 @@ package dvc
 
 import (
 	"bufio"
-	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/log"
-	repo_module "code.gitea.io/gitea/modules/repository"
 	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
+
+	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
+	repo_module "code.gitea.io/gitea/modules/repository"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 type Remote struct {
@@ -94,7 +95,7 @@ func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
 		cmd.Dir = tempRepoPath
 		output, err := cmd.CombinedOutput()
 
-		remotes = ParseRemote(string(output))
+		remotes = ParseRemote(ctx, string(output))
 
 		if err != nil {
 			log.Error("error when dvc pull: %v", err)
@@ -116,7 +117,7 @@ func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
 	return remotes, err
 }
 
-func changeFromProtocolToLink(protocol string) string {
+func changeFromProtocolToLink(protocol string, endpointurl string) string {
 	protocolPath := strings.Split(protocol, "://")
 
 	if len(protocolPath) == 2 {
@@ -124,6 +125,9 @@ func changeFromProtocolToLink(protocol string) string {
 			path := strings.Split(protocolPath[1], "/")
 			if len(path) == 2 {
 				return fmt.Sprintf("https://s3.amazonaws.com/%s/%s", path[0], path[1])
+			} else if endpointurl != "" {
+				endpointurl = strings.TrimSuffix(endpointurl, "\n")
+				return fmt.Sprintf("%s/%s", endpointurl, path[0])
 			}
 		}
 		if protocolPath[0] == "gs" {
@@ -152,17 +156,35 @@ func changeFromProtocolToLink(protocol string) string {
 	return protocol
 }
 
-func ParseRemote(output string) (remotes []Remote) {
+func ParseRemote(ctx *context.Context, output string) (remotes []Remote) {
 	re := regexp.MustCompile("\\s")
 
 	sc := bufio.NewScanner(strings.NewReader(output))
 	for sc.Scan() {
 		split := re.Split(strings.TrimSpace(sc.Text()), -1)
+
+		// get endpointurl value
+		endpointurl := ""
+		executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
+			str := fmt.Sprintf("remote.%s.endpointurl", split[0])
+			cmd := exec.Command("dvc", "config", str)
+			cmd.Dir = tempRepoPath
+			out, err := cmd.CombinedOutput()
+
+			if err != nil {
+				log.Error("error when dvc pull: %v", err)
+				return err
+			}
+
+			endpointurl = string(out)
+			return nil
+		})
+
 		if len(split) == 2 {
 			remotes = append(remotes, Remote{
 				Name: split[0],
 				Url:  split[1],
-				Link: changeFromProtocolToLink(split[1]),
+				Link: changeFromProtocolToLink(split[1], endpointurl),
 			})
 		}
 	}
@@ -276,6 +298,17 @@ func executeTempRepo(ctx *context.Context, execute func(string, *git.Repository)
 
 	repoPath := ctx.Repo.GitRepo.Path
 	branchName := ctx.Repo.BranchName
+	tagName := ctx.Repo.TagName
+
+	refName := ""
+	prefix := ""
+	if tagName != "" {
+		refName = tagName
+		prefix = "refs/tags"
+	} else {
+		refName = branchName
+		prefix = "refs/heads"
+	}
 
 	tempRepoPath, err := repo_module.CreateTemporaryPath("dataset")
 	if err != nil {
@@ -289,11 +322,11 @@ func executeTempRepo(ctx *context.Context, execute func(string, *git.Repository)
 		}
 	}()
 
-	log.Info("git clone %s %s %s", repoPath, branchName, tempRepoPath)
+	log.Info("git clone %s %s %s", repoPath, refName, tempRepoPath)
 	repo, err := git.PlainClone(tempRepoPath, false, &git.CloneOptions{
 		URL: repoPath,
 		// Ref: https://github.com/src-d/go-git/issues/553
-		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branchName)),
+		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("%s/%s", prefix, refName)),
 		SingleBranch:  true,
 	})
 

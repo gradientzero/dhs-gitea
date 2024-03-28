@@ -3,7 +3,9 @@ package devpod
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 )
@@ -129,4 +131,113 @@ echo "Success"
 		}
 
 	})
+}
+
+func TestGitCredential(t *testing.T) {
+
+	// Check git must be installed
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		t.Errorf("Expected git to be installed, but got: %v", err)
+	}
+
+	if gitPath == "" {
+		t.Errorf("Expected git to be installed, but got: %v", gitPath)
+	}
+
+	// Create a test GitCredential
+	workspaceID := "test_workspace"
+	username := "test_username"
+	token := "test_token"
+
+	gitCred := NewGitCredential(workspaceID, username, token)
+	// Test Init method
+	gitCred.Init()
+
+	// check env ar set
+	if gitCred.envUser != "GIT_USER_"+workspaceID {
+		t.Errorf("Expected envUser to be %s, got %s", "GIT_USER_"+workspaceID, gitCred.envUser)
+	}
+	if gitCred.envToken != "GIT_TOKEN_"+workspaceID {
+		t.Errorf("Expected envToken to be %s, got %s", "GIT_TOKEN_"+workspaceID, gitCred.envToken)
+	}
+
+	// check if scriptPath and scriptContent are set
+	if !strings.Contains(gitCred.scriptPath, workspaceID) {
+		t.Errorf("Expected scriptPath to not contain %s, got %s", workspaceID, gitCred.scriptPath)
+	}
+
+	if !strings.Contains(gitCred.scriptContent, workspaceID) {
+		t.Errorf("Expected scriptContent to not contain %s, got %s", workspaceID, gitCred.scriptContent)
+	}
+
+	// Test Set method
+	if err := gitCred.Set(); err != nil {
+		t.Errorf("Set method returned an error: %v", err)
+	}
+
+	// Test if the script file is created
+	if _, err := os.Stat(gitCred.scriptPath); os.IsNotExist(err) {
+		t.Errorf("Expected script file to exist, but it does not")
+	}
+
+	// check env ar set
+	if os.Getenv(gitCred.envUser) != username {
+		t.Errorf("Expected envUser to be %s, got %s", username, os.Getenv(gitCred.envUser))
+	}
+
+	if os.Getenv(gitCred.envToken) != token {
+		t.Errorf("Expected envToken to be %s, got %s", token, os.Getenv(gitCred.envToken))
+	}
+
+	// Test if the script file contains the expected content
+	scriptContent, err := ioutil.ReadFile(gitCred.scriptPath)
+	if err != nil {
+		t.Errorf("Expected no error, but got: %v", err)
+	}
+
+	if string(scriptContent) != gitCred.scriptContent {
+		t.Errorf("Expected script content to be %s, got %s", gitCred.scriptContent, string(scriptContent))
+	}
+
+	// check git credential is set
+	contentS, err := exec.Command("git", "config", "--get", "--global", "credential.helper").Output()
+	if err != nil {
+		t.Errorf("Expected git credential is set, but got: %v", err)
+	}
+
+	if !strings.Contains(string(contentS), gitCred.scriptPath) {
+		t.Errorf("Expected git credential is set, but got: %s", string(contentS))
+	}
+
+	// Test Unset method
+	err = gitCred.Remove()
+	if err != nil {
+		t.Errorf("Unset method returned an error: %v", err)
+	}
+
+	// Test if the script file is removed
+	if _, err := os.Stat(gitCred.scriptPath); !os.IsNotExist(err) {
+		t.Errorf("Expected script file to not exist, but it does")
+	}
+
+	// check env ar set
+	if os.Getenv(gitCred.envUser) != "" {
+		t.Errorf("Expected envUser to be empty, got %s", os.Getenv(gitCred.envUser))
+	}
+
+	if os.Getenv(gitCred.envToken) != "" {
+		t.Errorf("Expected envToken to be empty, got %s", os.Getenv(gitCred.envToken))
+	}
+
+	// check git credential is unset
+	contentS, err = exec.Command("git", "config", "--get", "--global", "credential.helper").Output()
+	if err == nil {
+		t.Errorf("Expected git credential is unset, but got: %s", string(contentS))
+	}
+
+	if string(contentS) != "" {
+		t.Errorf("Expected git credential is unset, but got: %s", string(contentS))
+	}
+
 }

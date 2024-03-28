@@ -13,6 +13,8 @@ const sfc = {
       canCompute: window.config.computeData.canCompute,
       machines: window.config.computeData.machines,
       textIsLoading: "<p>Process Computing...</p>",
+      branch: window.config.computeData.branch,
+      tag: window.config.computeData.tag,
     };
   },
 
@@ -39,7 +41,7 @@ const sfc = {
 
     compute: function () {
       // fetch html markup table
-      const url = `${window.location.pathname}/execute?machineId=${this.machineId}`;
+      const url = this.tag ? `${window.location.pathname}/execute?machineId=${this.machineId}&tag=${this.tag}` : `${window.location.pathname}/execute?machineId=${this.machineId}&branch=${this.branch}`;
       this.loading = true;
       this.computedResult = "";
       GET(url).then(async (res) => {
@@ -75,7 +77,7 @@ export function initRepoCompute() {
     >
       <div class="field">
         <label>Machines</label>
-        <select name="machine" class="ui fluid dropdown" v-model="machineId">
+        <select name="machine" class="ui fluid dropdown" v-model="machineId" required>
           <option :value="machine.ID" v-for="machine of machines">
             {{ machine.User }}@{{ machine.Host }}
           </option>
