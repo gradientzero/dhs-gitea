@@ -111,3 +111,5 @@ prime/
 
 # Manpage
 /man
+.env
+.env.dockerhub
