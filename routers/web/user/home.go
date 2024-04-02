@@ -47,6 +47,7 @@ const (
 	tplIssues     base.TplName = "user/dashboard/issues"
 	tplMilestones base.TplName = "user/dashboard/milestones"
 	tplProfile    base.TplName = "user/profile"
+	tplGetStart base.TplName = "user/dashboard/start"
 )
 
 // getDashboardContextUser finds out which context user dashboard is being viewed as .
@@ -139,6 +140,190 @@ func Dashboard(ctx *context.Context) {
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplDashboard)
+}
+
+// GetStarted render the user get started page
+func GetStarted(ctx *context.Context) {
+	if unit.TypeIssues.UnitGlobalDisabled() && unit.TypePullRequests.UnitGlobalDisabled() {
+		log.Debug("Milestones overview page not available as both issues and pull requests are globally disabled")
+		ctx.Status(http.StatusNotFound)
+		return
+	}
+
+	ctx.Data["Title"] = ctx.Tr("milestones")
+	ctx.Data["PageIsMilestonesDashboard"] = true
+
+	ctxUser := getDashboardContextUser(ctx)
+	if ctx.Written() {
+		return
+	}
+
+	repoOpts := repo_model.SearchRepoOptions{
+		Actor:         ctx.Doer,
+		OwnerID:       ctxUser.ID,
+		Private:       true,
+		AllPublic:     false, // Include also all public repositories of users and public organisations
+		AllLimited:    false, // Include also all public repositories of limited organisations
+		Archived:      util.OptionalBoolFalse,
+		HasMilestones: util.OptionalBoolTrue, // Just needs display repos has milestones
+	}
+
+	if ctxUser.IsOrganization() && ctx.Org.Team != nil {
+		repoOpts.TeamID = ctx.Org.Team.ID
+	}
+
+	var (
+		userRepoCond = repo_model.SearchRepositoryCondition(&repoOpts) // all repo condition user could visit
+		repoCond     = userRepoCond
+		repoIDs      []int64
+
+		reposQuery   = ctx.FormString("repos")
+		isShowClosed = ctx.FormString("state") == "closed"
+		sortType     = ctx.FormString("sort")
+		page         = ctx.FormInt("page")
+		keyword      = ctx.FormTrim("q")
+	)
+
+	if page <= 1 {
+		page = 1
+	}
+
+	if len(reposQuery) != 0 {
+		if issueReposQueryPattern.MatchString(reposQuery) {
+			// remove "[" and "]" from string
+			reposQuery = reposQuery[1 : len(reposQuery)-1]
+			// for each ID (delimiter ",") add to int to repoIDs
+
+			for _, rID := range strings.Split(reposQuery, ",") {
+				// Ensure nonempty string entries
+				if rID != "" && rID != "0" {
+					rIDint64, err := strconv.ParseInt(rID, 10, 64)
+					// If the repo id specified by query is not parseable or not accessible by user, just ignore it.
+					if err == nil {
+						repoIDs = append(repoIDs, rIDint64)
+					}
+				}
+			}
+			if len(repoIDs) > 0 {
+				// Don't just let repoCond = builder.In("id", repoIDs) because user may has no permission on repoIDs
+				// But the original repoCond has a limitation
+				repoCond = repoCond.And(builder.In("id", repoIDs))
+			}
+		} else {
+			log.Warn("issueReposQueryPattern not match with query")
+		}
+	}
+
+	counts, err := issues_model.CountMilestonesByRepoCondAndKw(ctx, userRepoCond, keyword, isShowClosed)
+	if err != nil {
+		ctx.ServerError("CountMilestonesByRepoIDs", err)
+		return
+	}
+
+	milestones, err := issues_model.SearchMilestones(ctx, repoCond, page, isShowClosed, sortType, keyword)
+	if err != nil {
+		ctx.ServerError("SearchMilestones", err)
+		return
+	}
+
+	showRepos, _, err := repo_model.SearchRepositoryByCondition(ctx, &repoOpts, userRepoCond, false)
+	if err != nil {
+		ctx.ServerError("SearchRepositoryByCondition", err)
+		return
+	}
+	sort.Sort(showRepos)
+
+	for i := 0; i < len(milestones); {
+		for _, repo := range showRepos {
+			if milestones[i].RepoID == repo.ID {
+				milestones[i].Repo = repo
+				break
+			}
+		}
+		if milestones[i].Repo == nil {
+			log.Warn("Cannot find milestone %d 's repository %d", milestones[i].ID, milestones[i].RepoID)
+			milestones = append(milestones[:i], milestones[i+1:]...)
+			continue
+		}
+
+		milestones[i].RenderedContent, err = markdown.RenderString(&markup.RenderContext{
+			URLPrefix: milestones[i].Repo.Link(),
+			Metas:     milestones[i].Repo.ComposeMetas(),
+			Ctx:       ctx,
+		}, milestones[i].Content)
+		if err != nil {
+			ctx.ServerError("RenderString", err)
+			return
+		}
+
+		if milestones[i].Repo.IsTimetrackerEnabled(ctx) {
+			err := milestones[i].LoadTotalTrackedTime(ctx)
+			if err != nil {
+				ctx.ServerError("LoadTotalTrackedTime", err)
+				return
+			}
+		}
+		i++
+	}
+
+	milestoneStats, err := issues_model.GetMilestonesStatsByRepoCondAndKw(ctx, repoCond, keyword)
+	if err != nil {
+		ctx.ServerError("GetMilestoneStats", err)
+		return
+	}
+
+	var totalMilestoneStats *issues_model.MilestonesStats
+	if len(repoIDs) == 0 {
+		totalMilestoneStats = milestoneStats
+	} else {
+		totalMilestoneStats, err = issues_model.GetMilestonesStatsByRepoCondAndKw(ctx, userRepoCond, keyword)
+		if err != nil {
+			ctx.ServerError("GetMilestoneStats", err)
+			return
+		}
+	}
+
+	showRepoIds := make(container.Set[int64], len(showRepos))
+	for _, repo := range showRepos {
+		if repo.ID > 0 {
+			showRepoIds.Add(repo.ID)
+		}
+	}
+	if len(repoIDs) == 0 {
+		repoIDs = showRepoIds.Values()
+	}
+	repoIDs = slices.DeleteFunc(repoIDs, func(v int64) bool {
+		return !showRepoIds.Contains(v)
+	})
+
+	var pagerCount int
+	if isShowClosed {
+		ctx.Data["State"] = "closed"
+		ctx.Data["Total"] = totalMilestoneStats.ClosedCount
+		pagerCount = int(milestoneStats.ClosedCount)
+	} else {
+		ctx.Data["State"] = "open"
+		ctx.Data["Total"] = totalMilestoneStats.OpenCount
+		pagerCount = int(milestoneStats.OpenCount)
+	}
+
+	ctx.Data["Milestones"] = milestones
+	ctx.Data["Repos"] = showRepos
+	ctx.Data["Counts"] = counts
+	ctx.Data["MilestoneStats"] = milestoneStats
+	ctx.Data["SortType"] = sortType
+	ctx.Data["Keyword"] = keyword
+	ctx.Data["RepoIDs"] = repoIDs
+	ctx.Data["IsShowClosed"] = isShowClosed
+
+	pager := context.NewPagination(pagerCount, setting.UI.IssuePagingNum, page, 5)
+	pager.AddParam(ctx, "q", "Keyword")
+	pager.AddParam(ctx, "repos", "RepoIDs")
+	pager.AddParam(ctx, "sort", "SortType")
+	pager.AddParam(ctx, "state", "State")
+	ctx.Data["Page"] = pager
+
+	ctx.HTML(http.StatusOK, tplGetStart)
 }
 
 // Milestones render the user milestones page

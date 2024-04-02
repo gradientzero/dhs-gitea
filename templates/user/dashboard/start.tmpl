@@ -1,0 +1,60 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content dashboard issues">
+	<div class="ui container">
+		<article>
+			<h1>Getting Started</h1>
+			<p>Run experiments in Sandbox</p>
+			<p>How to run experiments locally:</p>
+			<ul>
+				<li>Create a repo on remote machine.</li>
+				<li>In Organization dashboard, look for New Repository then create repository after fill in all necessary data.</li>
+				<li>After new repository created, go to the repo page, and it will be something like this.</li>
+				<li>To initially add new file, you can do it by click to the Add File button, and select Upload File.</li>
+				<li>After upload all necessary files, press Commit Changes and repo page will look something like this.</li>
+				<li>To clone the repo to our local machine, we can do it via SSH or HTTPS, copy the SSH/HTTPS link on the repo page.</li>
+				<li>Create new conda environment for this repository on you machine</li>
+				<li>Installing all required package by running this script pip install -r ./requirements.txt</li>
+				<li>Run python3 test.py or python test.py depends which one works</li>
+				<li>After that, new folder dvclive should be created.</li>
+				<li>If you want to share your local results directly within the sandbox, you could push your changes directly to remote repository:</li>
+				<li>Finally upload or push the result into the repository using these commands:</li>
+				<ul>
+					<li>git add -A</li>
+					<li>git commit -m "update file"</li>
+					<li>git push</li>
+				</ul>
+				<li>After pushed to remote repository, then the updated file dvclive should be showed up.</li>
+			</ul>
+
+			<p>How to connect DVC to track data:</p>
+				<ul>
+					<li>Run dvc init - this will add .dvc/config file</li>
+					<li>Add remote file configuration by executing this commands:</li>
+					<ul>
+						<li>dvc remote add -d aquaremote s3://aqua01 --force</li>
+						<li>dvc remote modify aquaremote endpointurl https://sos-de-fra-1.exo.io. Those commands will add configurations to .dvc/config file</li>
+					</ul>
+					<li>After DVC config has been set, you need to set AWS credentials. Here is how to set AWS credentials</li>
+					<ul>
+						<li>Please install AWS CLI by following this installation page from AWS https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html</li>
+						<li>After done installation, type aws configure on terminal</li>
+						<li>Then fill in your AWS Access Key ID and AWS Secret Access Key. It will create files inside ~/.aws</li>
+					</ul>
+
+					<li>After both DVC and AWS config has been set, then you can start connect and DVC data. Use dvc pull to fetch data and dvc push to update data.</li>
+					<li>Then finally commit all changes and push the repo using these commands.</li>
+					<ul>
+						<li>git add -A</li>
+						<li>git commit -m "update .dvc/config file"</li>
+						<li>git push</li>
+					</ul>
+
+					<li>After pushed to remote repository, then the new created file .dvc should be showed up in remote repository as well.</li>
+					<li></li>
+					<li></li>
+				</ul>
+
+		</article>
+	</div>
+</div>
+{{template "base/footer" .}}
