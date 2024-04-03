@@ -3,10 +3,30 @@
 	<div class="ui container">
 		<article>
 			<h1>Getting Started</h1>
-			<p>Run experiments in Sandbox</p>
-			<p>How to run experiments locally:</p>
+			<h2>How to add a remote execution environment</h2>
+			<h3>Connect Remote Machine within tenant</h3>
+			<ul>
+				<li>Suppose new organization repo has been created.</li>
+				<li>Go to organization's <code>setting</code> and  SSH Key. We need to add <code>ssh key</code> from the remote machine. Insert the public key into <code>/<user>/.ssh/authorized_keys</code> on the remote machine.</li>
+				<li>Add remote machine where the experiment would be run on.</li>
+				<li>If organization's repo is private repo then need to set Gitea token so that remote machine can access.</li>
+				<li>First go to User's Settings > Applications. Select All on Repo and Organization Access, then give <code>Read and Write</code> permissions to all actions.</li>
+				<li>Then new token is generated and popped up. Copy the token.</li>
+				<li>Go to organization's setting, and select Gitea Token. And paste the token there.</li>
+				<li>
+					Add Devpod Credential
+					<ul>
+						<li>Later the specified repository will be cloned using Git into a new container instance. To enable this, the container requires access to the repository using some credentials. These credentials also empower the container to push results back into the repository.</li>
+					</ul>
+				</li>
+				<li>To start computation on remote machine, look for Compute tab and select your added remote machine, then press Compute button.</li>
+				<li>It will clone the repository, run the computation on remote machine, generate result, and automatically push all the changes to the repository.</li>
+			</ul>
 
-			<a class="item" href="{{AppSubUrl}}/create-new-project-from-template">{{ctx.Locale.Tr "New Project From Template"}}</a>
+			<br />
+			<h2>How To Start With New Project</h2>
+			<h3>Run experiments in Sandbox</h3>
+			<p>How to run experiments locally:</p>
 
 			<ul>
 				<li>Create a repo on remote machine.</li>
@@ -53,11 +73,12 @@
 					</ul>
 
 					<li>After pushed to remote repository, then the new created file .dvc should be showed up in remote repository as well.</li>
-					<li></li>
-					<li></li>
 				</ul>
-
 		</article>
+
+		<a class="ui primary button" href="{{AppSubUrl}}/repo/create-from-template">
+			{{ctx.Locale.Tr "New Project From Template"}}
+		</a>
 	</div>
 </div>
 {{template "base/footer" .}}

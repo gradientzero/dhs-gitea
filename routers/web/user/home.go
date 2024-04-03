@@ -47,7 +47,7 @@ const (
 	tplIssues     base.TplName = "user/dashboard/issues"
 	tplMilestones base.TplName = "user/dashboard/milestones"
 	tplProfile    base.TplName = "user/profile"
-	tplGetStart base.TplName = "user/dashboard/start"
+	tplGetStart   base.TplName = "user/dashboard/start"
 )
 
 // getDashboardContextUser finds out which context user dashboard is being viewed as .
@@ -145,13 +145,13 @@ func Dashboard(ctx *context.Context) {
 // GetStarted render the user get started page
 func GetStarted(ctx *context.Context) {
 	if unit.TypeIssues.UnitGlobalDisabled() && unit.TypePullRequests.UnitGlobalDisabled() {
-		log.Debug("Milestones overview page not available as both issues and pull requests are globally disabled")
+		log.Debug("Get Started page not available as both issues and pull requests are globally disabled")
 		ctx.Status(http.StatusNotFound)
 		return
 	}
 
-	ctx.Data["Title"] = ctx.Tr("milestones")
-	ctx.Data["PageIsMilestonesDashboard"] = true
+	ctx.Data["Title"] = ctx.Tr("start")
+	ctx.Data["PageIsGetStarted"] = true
 
 	ctxUser := getDashboardContextUser(ctx)
 	if ctx.Written() {

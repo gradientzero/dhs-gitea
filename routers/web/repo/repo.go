@@ -37,8 +37,9 @@ import (
 )
 
 const (
-	tplCreate       base.TplName = "repo/create"
-	tplAlertDetails base.TplName = "base/alert_details"
+	tplCreate             base.TplName = "repo/create"
+	tplAlertDetails       base.TplName = "base/alert_details"
+	tplCreateWithTemplate base.TplName = "repo/create_with_template"
 )
 
 // MustBeNotEmpty render when a repo is a empty git dir
@@ -699,4 +700,88 @@ func PrepareBranchList(ctx *context.Context) {
 		brs = append([]string{ctx.Repo.Repository.DefaultBranch}, brs...)
 	}
 	ctx.Data["Branches"] = brs
+}
+
+// CreateFromTemplate render creating repository page with template
+func CreateFromTemplate(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("new_repo")
+
+	// Give default value for template to render.
+	ctx.Data["Gitignores"] = repo_module.Gitignores
+	ctx.Data["LabelTemplateFiles"] = repo_module.LabelTemplateFiles
+	ctx.Data["Licenses"] = repo_module.Licenses
+	ctx.Data["Readmes"] = repo_module.Readmes
+	ctx.Data["readme"] = "Default"
+	ctx.Data["private"] = getRepoPrivate(ctx)
+	ctx.Data["IsForcedPrivate"] = setting.Repository.ForcePrivate
+	ctx.Data["default_branch"] = setting.Repository.DefaultBranch
+
+	ctxUser := checkContextUser(ctx, ctx.FormInt64("org"))
+	if ctx.Written() {
+		return
+	}
+	ctx.Data["ContextUser"] = ctxUser
+
+	ctx.Data["repo_template_name"] = ctx.Tr("repo.template_select")
+	templateID := ctx.FormInt64("template_id")
+	if templateID > 0 {
+		templateRepo, err := repo_model.GetRepositoryByID(ctx, templateID)
+		if err == nil && access_model.CheckRepoUnitUser(ctx, templateRepo, ctxUser, unit.TypeCode) {
+			ctx.Data["repo_template"] = templateID
+			ctx.Data["repo_template_name"] = templateRepo.Name
+		}
+	}
+
+	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
+	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
+
+	ctx.HTML(http.StatusOK, tplCreateWithTemplate)
+}
+
+// CreateFromTemplatePost will creating repository using provided template
+func CreateFromTemplatePost(ctx *context.Context) {
+	form := web.GetForm(ctx).(*forms.CreateRepoForm)
+
+	ctxUser := checkContextUser(ctx, form.UID)
+	if ctx.Written() {
+		return
+	}
+	if ctx.HasError() {
+		ctx.HTML(http.StatusOK, tplCreateWithTemplate)
+		return
+	}
+
+	ctx.Data["ContextUser"] = ctxUser
+	templateRepo := getRepositoryByName(ctx, "aqua-demoo", ctxUser.ID)
+	if ctx.Written() {
+		return
+	}
+
+	if !templateRepo.IsTemplate {
+		ctx.ServerError("CreateFromTemplatePost", errors.New(ctx.Tr("repo.template.invalid")))
+		return
+	}
+
+	// GenerateRepoOptions will be leave as default true
+	// Goals is to copy all of the contents of the template
+	opts := repo_module.GenerateRepoOptions{
+		Name:            form.RepoName,
+		Description:     templateRepo.Description,
+		Private:         templateRepo.IsPrivate,
+		GitContent:      true,
+		Topics:          true,
+		GitHooks:        true,
+		Webhooks:        true,
+		Avatar:          true,
+		IssueLabels:     true,
+		ProtectedBranch: true,
+	}
+
+	repo, err := repo_service.GenerateRepository(ctx, ctx.Doer, ctxUser, templateRepo, opts)
+	if err == nil {
+		log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
+		ctx.Redirect(repo.Link())
+		return
+	}
+	handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, nil)
 }

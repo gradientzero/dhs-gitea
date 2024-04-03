@@ -946,6 +946,9 @@ func registerRoutes(m *web.Route) {
 				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
 		}, context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader)
 		m.Get("/search", repo.SearchRepo)
+
+		m.Get("/create-from-template", repo.CreateFromTemplate)
+		m.Post("/create-from-template", web.Bind(forms.CreateRepoForm{}), repo.CreateFromTemplatePost)
 	}, reqSignIn)
 
 	m.Group("/{username}/-", func() {
