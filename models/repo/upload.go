@@ -175,3 +175,34 @@ func DeleteUploadByUUID(ctx context.Context, uuid string) error {
 
 	return nil
 }
+
+// NewUploadBuffer creates a new upload object from buffer.
+func NewUploadBuffer(ctx context.Context, name string, buf []byte) (_ *Upload, err error) {
+	upload := &Upload{
+		UUID: gouuid.New().String(),
+		Name: name,
+	}
+
+	localPath := upload.LocalPath()
+	if err = os.MkdirAll(path.Dir(localPath), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("MkdirAll: %w", err)
+	}
+
+	fmt.Println("LOCALPATH: ", localPath)
+
+	fw, err := os.Create(localPath)
+	if err != nil {
+		return nil, fmt.Errorf("Create: %w", err)
+	}
+	defer fw.Close()
+
+	if _, err = fw.Write(buf); err != nil {
+		return nil, fmt.Errorf("Write: %w", err)
+	}
+
+	if _, err := db.GetEngine(ctx).Insert(upload); err != nil {
+		return nil, err
+	}
+
+	return upload, nil
+}

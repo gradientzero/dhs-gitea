@@ -1,0 +1,14 @@
+params:
+- params.yaml
+metrics:
+- metrics.json
+plots:
+- plots/metrics:
+    x: step
+- plots/custom/iris_feature_importance.json:
+    template: bar_horizontal
+    x: importance
+    y: name
+    title: 'Iris Dataset: Feature Importance'
+    x_label: Feature Importance
+    y_label: Feature Name

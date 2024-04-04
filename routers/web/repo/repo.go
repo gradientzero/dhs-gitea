@@ -7,9 +7,11 @@ package repo
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
@@ -31,15 +33,19 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/convert"
+	"code.gitea.io/gitea/services/file"
 	"code.gitea.io/gitea/services/forms"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
+	files_service "code.gitea.io/gitea/services/repository/files"
 )
 
 const (
 	tplCreate             base.TplName = "repo/create"
 	tplAlertDetails       base.TplName = "base/alert_details"
 	tplCreateWithTemplate base.TplName = "repo/create_with_template"
+	tplRepoPath                        = "templateRepo/aqua-demo"
+	generatedFromTemplate              = "generated from template"
 )
 
 // MustBeNotEmpty render when a repo is a empty git dir
@@ -752,36 +758,77 @@ func CreateFromTemplatePost(ctx *context.Context) {
 	}
 
 	ctx.Data["ContextUser"] = ctxUser
-	templateRepo := getRepositoryByName(ctx, "aqua-demoo", ctxUser.ID)
-	if ctx.Written() {
-		return
-	}
 
-	if !templateRepo.IsTemplate {
-		ctx.ServerError("CreateFromTemplatePost", errors.New(ctx.Tr("repo.template.invalid")))
-		return
+	var fileWG sync.WaitGroup
+	// fs.ReadDir will read list of file inside the directory of file.StaticFiles or `templateRepo`
+	files, err := fs.ReadDir(file.StaticFiles, tplRepoPath)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
 	}
+	var listUpload []string
+	fileWG.Add(len(files))
+	go func() {
+		/*
+			Goroutines for running file processing, it read files from `file.StaticFiles` which pointing on `templateRepo` folder
+			After that, it will read the file into buffer and submit into `NewUploadBuffer`
+			After submit, it will save the UUID of the file on slice of strings.
+		*/
+		for _, fd := range files {
+			if fd.IsDir() {
+				// TODO: working on file inside sub directory
+				log.Info("FD Is Directory: ", fd.Name())
+			} else {
+				f, err := file.StaticFiles.ReadFile(fmt.Sprintf("%s/%s", tplRepoPath, fd.Name()))
+				if err != nil {
+					ctx.Error(http.StatusInternalServerError, fmt.Sprintf("ReadFile: %v", err))
+				}
 
-	// GenerateRepoOptions will be leave as default true
-	// Goals is to copy all of the contents of the template
-	opts := repo_module.GenerateRepoOptions{
-		Name:            form.RepoName,
-		Description:     templateRepo.Description,
-		Private:         templateRepo.IsPrivate,
-		GitContent:      true,
-		Topics:          true,
-		GitHooks:        true,
-		Webhooks:        true,
-		Avatar:          true,
-		IssueLabels:     true,
-		ProtectedBranch: true,
-	}
+				upload, err := repo_model.NewUploadBuffer(ctx, fd.Name(), f)
+				if err != nil {
+					ctx.Error(http.StatusInternalServerError, fmt.Sprintf("NewUpload: %v", err))
+					return
+				}
+				listUpload = append(listUpload, upload.UUID)
+			}
 
-	repo, err := repo_service.GenerateRepository(ctx, ctx.Doer, ctxUser, templateRepo, opts)
-	if err == nil {
-		log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
-		ctx.Redirect(repo.Link())
-		return
-	}
-	handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, nil)
+			fileWG.Done()
+		}
+	}()
+	fileWG.Wait()
+
+	var repoWG sync.WaitGroup
+	var repo *repo_model.Repository
+	repoWG.Add(2)
+	go func() {
+		/*
+			Goroutines for processing the repo, by create the repo with custom input name.
+			After repo created, gather the slice of strings from file upload before, and upload file to the repo.
+		*/
+		repo, err = repo_service.CreateRepository(ctx, ctx.Doer, ctxUser, repo_service.CreateRepoOptions{
+			Name: form.RepoName,
+		})
+		if err != nil {
+			handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, form)
+			return
+		}
+		repoWG.Done()
+
+		if err = files_service.UploadRepoFiles(ctx, repo, ctx.Doer, &files_service.UploadRepoFileOptions{
+			LastCommitID: "",
+			OldBranch:    repo.DefaultBranch,
+			NewBranch:    repo.DefaultBranch,
+			TreePath:     "",
+			Message:      generatedFromTemplate,
+			Files:        listUpload,
+			Signoff:      false,
+		}); err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return
+		}
+		repoWG.Done()
+	}()
+	repoWG.Wait()
+
+	log.Trace("Repository created [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
+	ctx.Redirect(repo.Link())
 }
