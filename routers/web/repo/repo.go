@@ -7,7 +7,6 @@ package repo
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"slices"
 	"strings"
@@ -744,6 +743,76 @@ func CreateFromTemplate(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplCreateWithTemplate)
 }
 
+// getFilesFromDirectory - will be responsible and act as recursive function
+// to get list of files on each directory
+func getFilesFromDirectory(ctx *context.Context, root, path, directory string, repo *repo_model.Repository) error {
+	p := root
+	if path != "" {
+		p = fmt.Sprintf("%s%s", root, path)
+	}
+	// file.StaticFiles will read list of file inside the directory of file.StaticFiles or `templateRepo`
+	entries, err := file.StaticFiles.ReadDir(p)
+	if err != nil {
+		return fmt.Errorf("error reading directory %s/%s: %w", root, path, err)
+	}
+
+	var fus []string
+	for _, entry := range entries {
+		fullPath := p + "/" + entry.Name()
+
+		if entry.IsDir() {
+			directorySplitted := strings.Split(fullPath, "/")
+			directoryJoined := strings.Join(directorySplitted[2:], "/")
+			err := getFilesFromDirectory(ctx, root, path+"/"+entry.Name(), directoryJoined, repo)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		f, err := file.StaticFiles.ReadFile(fullPath)
+		if err != nil {
+			return fmt.Errorf("error reading file %s: ", fullPath, err)
+		}
+
+		upload, err := repo_model.NewUploadBuffer(ctx, entry.Name(), f)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return fmt.Errorf("NewUpload %s: ", err)
+		}
+
+		fus = append(fus, upload.UUID)
+	}
+
+	// git.OpenRepository will get the current repo object
+	// Goals is to find commit id
+	fromGitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return fmt.Errorf("OpenRepository %s: ", err)
+	}
+	baseSHA, err := fromGitRepo.GetBranchCommitID(repo.DefaultBranch)
+	if err != nil {
+		baseSHA = ""
+	}
+
+	// UploadRepoFiles will responsible to push every files into it's own directory
+	if err = files_service.UploadRepoFiles(ctx, repo, ctx.Doer, &files_service.UploadRepoFileOptions{
+		LastCommitID: baseSHA,
+		OldBranch:    repo.DefaultBranch,
+		NewBranch:    repo.DefaultBranch,
+		TreePath:     directory,
+		Message:      generatedFromTemplate,
+		Files:        fus,
+		Signoff:      false,
+	}); err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return fmt.Errorf("UploadRepoFiles %s: ", err)
+	}
+
+	return nil
+}
+
 // CreateFromTemplatePost will creating repository using provided template
 func CreateFromTemplatePost(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.CreateRepoForm)
@@ -759,75 +828,26 @@ func CreateFromTemplatePost(ctx *context.Context) {
 
 	ctx.Data["ContextUser"] = ctxUser
 
-	var fileWG sync.WaitGroup
-	// fs.ReadDir will read list of file inside the directory of file.StaticFiles or `templateRepo`
-	files, err := fs.ReadDir(file.StaticFiles, tplRepoPath)
+	repo, err := repo_service.CreateRepository(ctx, ctx.Doer, ctxUser, repo_service.CreateRepoOptions{
+		Name: form.RepoName,
+	})
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, err.Error())
+		handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, form)
+		return
 	}
-	var listUpload []string
-	fileWG.Add(len(files))
+
+	var filesWG sync.WaitGroup
+	filesWG.Add(1)
 	go func() {
-		/*
-			Goroutines for running file processing, it read files from `file.StaticFiles` which pointing on `templateRepo` folder
-			After that, it will read the file into buffer and submit into `NewUploadBuffer`
-			After submit, it will save the UUID of the file on slice of strings.
-		*/
-		for _, fd := range files {
-			if fd.IsDir() {
-				// TODO: working on file inside sub directory
-				log.Info("FD Is Directory: ", fd.Name())
-			} else {
-				f, err := file.StaticFiles.ReadFile(fmt.Sprintf("%s/%s", tplRepoPath, fd.Name()))
-				if err != nil {
-					ctx.Error(http.StatusInternalServerError, fmt.Sprintf("ReadFile: %v", err))
-				}
-
-				upload, err := repo_model.NewUploadBuffer(ctx, fd.Name(), f)
-				if err != nil {
-					ctx.Error(http.StatusInternalServerError, fmt.Sprintf("NewUpload: %v", err))
-					return
-				}
-				listUpload = append(listUpload, upload.UUID)
-			}
-
-			fileWG.Done()
-		}
-	}()
-	fileWG.Wait()
-
-	var repoWG sync.WaitGroup
-	var repo *repo_model.Repository
-	repoWG.Add(2)
-	go func() {
-		/*
-			Goroutines for processing the repo, by create the repo with custom input name.
-			After repo created, gather the slice of strings from file upload before, and upload file to the repo.
-		*/
-		repo, err = repo_service.CreateRepository(ctx, ctx.Doer, ctxUser, repo_service.CreateRepoOptions{
-			Name: form.RepoName,
-		})
+		// Will pickup files from directory
+		// Also will submitting the files and commit to the repo
+		err := getFilesFromDirectory(ctx, tplRepoPath, "", "", repo)
 		if err != nil {
-			handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, form)
-			return
-		}
-		repoWG.Done()
-
-		if err = files_service.UploadRepoFiles(ctx, repo, ctx.Doer, &files_service.UploadRepoFileOptions{
-			LastCommitID: "",
-			OldBranch:    repo.DefaultBranch,
-			NewBranch:    repo.DefaultBranch,
-			TreePath:     "",
-			Message:      generatedFromTemplate,
-			Files:        listUpload,
-			Signoff:      false,
-		}); err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
-			return
 		}
-		repoWG.Done()
+		filesWG.Done()
 	}()
-	repoWG.Wait()
+	filesWG.Wait()
 
 	log.Trace("Repository created [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
 	ctx.Redirect(repo.Link())

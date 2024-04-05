@@ -188,8 +188,6 @@ func NewUploadBuffer(ctx context.Context, name string, buf []byte) (_ *Upload, e
 		return nil, fmt.Errorf("MkdirAll: %w", err)
 	}
 
-	fmt.Println("LOCALPATH: ", localPath)
-
 	fw, err := os.Create(localPath)
 	if err != nil {
 		return nil, fmt.Errorf("Create: %w", err)
