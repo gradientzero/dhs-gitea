@@ -1,8 +1,11 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content repository new repo">
+	<div id="loader" class="ui dimmer">
+		<div class="ui big text loader">Generating template...</div>
+	</div>
 	<div class="ui middle very relaxed page one column grid">
 		<div class="column">
-			<form class="ui form" action="{{.Link}}" method="post">
+			<form id="form" class="ui form" action="{{.Link}}" method="post">
 				{{.CsrfTokenHtml}}
 				<h3 class="ui top attached header">
 					{{ctx.Locale.Tr "new_repo"}}
@@ -59,4 +62,15 @@
 		</div>
 	</div>
 </div>
+
+<script>
+	(function() {
+		const loader = document.getElementById("loader")
+		const form = document.getElementById("form")
+		
+		form.addEventListener("submit", (e) => {
+			loader.classList.add("active")
+		})
+	})();
+</script>
 {{template "base/footer" .}}
