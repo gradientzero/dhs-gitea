@@ -13,66 +13,66 @@
 			<ul>
 				<li class="gt-mb-2">Create a repo on remote machine.</li>
 				<li class="gt-mb-2">In Organization dashboard, look for New Repository then create repository after fill in all necessary data.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-1.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-1.png"  />
 				<li class="gt-mb-2">After new repository created, go to the repo page, and it will be something like this.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-2.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-2.png"  />
 				<li class="gt-mb-2">To initially add new file, you can do it by click to the Add File button, and select Upload File.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-3.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-3.png"  />
 				<li class="gt-mb-2">After upload all necessary files, press Commit Changes and repo page will look something like this.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-4.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-4.png"  />
 				<li class="gt-mb-2">To clone the repo to our local machine, we can do it via SSH or HTTPS, copy the SSH/HTTPS link on the repo page.</li>
 				<li class="gt-mb-2">Run this command from the local terminal <code>git clone &lt;SSH/HTTPS link&gt;</code></li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-5.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-5.png"  />
 				<li class="gt-mb-2">Create new conda environment for this repository on you machine</li>
 				<li class="gt-mb-2">Installing all required package by running this script <code>pip install -r ./requirements.txt</code></li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-6.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-6.png"  />
 				<li class="gt-mb-2">Run python3 test.py or python test.py depends which one works</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-7.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-7.png"  />
 				<li class="gt-mb-2">After that, new folder dvclive should be created.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-8.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-8.png"  />
 				<li class="gt-mb-2">If you want to share your local results directly within the sandbox, you could push your changes directly to remote repository:</li>
 				<li class="gt-mb-2">Finally upload or push the result into the repository using these commands:</li>
 				<ul class="gt-mb-2">
 					<li>git add -A</li>
 					<li>git commit -m "update file"</li>
 					<li>git push</li>
-					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-9.png"  />
+					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-9.png"  />
 				</ul>
 				<li class="gt-mb-2">After pushed to remote repository, then the updated file dvclive should be showed up.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-10.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/experiment-sandbox-10.png"  />
 			</ul>
 
 			<h4>How to connect DVC to track data:</h4>
 			<ul>
 				<li class="gt-mb-2">Run dvc init - this will add .dvc/config file</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-11.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-1.png"  />
 				<li class="gt-mb-2">Add remote file configuration by executing this commands:</li>
 				<ul class="gt-mb-2">
 					<li class="gt-mb-2">dvc remote add -d aquaremote s3://aqua01 --force</li>
-					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-12.png"  />
+					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-2.png"  />
 					<li class="gt-mb-2">dvc remote modify aquaremote endpointurl https://sos-de-fra-1.exo.io. Those commands will add configurations to .dvc/config file</li>
-					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-13.png"  />
+					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-3.png"  />
 				</ul>
 				<li class="gt-mb-2">After DVC config has been set, you need to set AWS credentials. Here is how to set AWS credentials</li>
 				<ul class="gt-mb-2">
 					<li>Please install AWS CLI by following this installation page from AWS https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html</li>
 					<li>After done installation, type aws configure on terminal</li>
 					<li class="gt-mb-2">Then fill in your AWS Access Key ID and AWS Secret Access Key. It will create files inside ~/.aws</li>
-					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-14.png"  />
+					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-4.png"  />
 				</ul>
 
 				<li class="gt-mb-2">After both DVC and AWS config has been set, then you can start connect and DVC data. Use dvc pull to fetch data and dvc push to update data.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-15.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-5.png"  />
 				<li class="gt-mb-2">Then finally commit all changes and push the repo using these commands.</li>
 				<ul class="gt-mb-2">
 					<li>git add -A</li>
 					<li>git commit -m "update .dvc/config file"</li>
 					<li class="gt-mb-2">git push</li>
-					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-16.png"  />
+					<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-6.png"  />
 				</ul>
 
 				<li class="gt-mb-2">After pushed to remote repository, then the new created file .dvc should be showed up in remote repository as well.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-22-17.png"  />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/dvc-track-data-7.png"  />
 			</ul>
 
 			<br />
@@ -81,30 +81,79 @@
 			<h3>Connect Remote Machine within tenant</h3>
 			<ul>
 				<li class="gt-mb-2">Suppose new organization repo has been created.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-1.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-1.png" />
 				<li class="gt-mb-2">Go to organization's setting and  SSH Key. We need to add ssh key from the remote machine. Insert the public key into <code>/&lt;user&gt;/.ssh/authorized_keys</code> on the remote machine.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-2.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-2.png" />
 				<li class="gt-mb-2">Add remote machine where the experiment would be run on.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-3.png" /> 
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-3.png" /> 
 				<li class="gt-mb-2">If organization's repo is private repo then need to set Gitea token so that remote machine can access.</li>
 				<li class="gt-mb-2">First go to User's Settings > Applications. Select All on Repo and Organization Access, then give Read and Write permissions to all actions.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-4.png" />
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-5.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-4.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-5.png" />
 				<li class="gt-mb-2">Then new token is generated and popped up. Copy the token.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-6.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-6.png" />
 				<li class="gt-mb-2">Go to organization's setting, and select Gitea Token. And paste the token there.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-7.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-7.png" />
 				<li class="gt-mb-2">
 					Add Devpod Credential
 					<ul>
 						<li>Later the specified repository will be cloned using Git into a new container instance. To enable this, the container requires access to the repository using some credentials. These credentials also empower the container to push results back into the repository.</li>
 					</ul>
 				</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-8.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-8.png" />
 				<li class="gt-mb-2">To start computation on remote machine, look for Compute tab and select your added remote machine, then press Compute button.</li>
-				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/grz-27-9.png" />
+				<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-9.png" />
 				<li>It will clone the repository, run the computation on remote machine, generate result, and automatically push all the changes to the repository.</li>
-			</ul>			
+			</ul>
+
+			<h3>Notes when using Docker Container as remote machine</h3>
+			<ul>
+				<li class="gt-mb-2">
+					Running the container with attached -v /var/run/docker.sock:/var/run/docker.sock volume
+					<ul>
+						<li class="gt-mb-2">We need docker inside the container of remote machine we create</li>
+						<li class="gt-mb-2">
+							The reason to use volume is docker inside container will not be possible, the docker.sock need to be share with the host, volume make it possible
+						</li>
+					</ul>
+				</li>
+				<li class="gt-mb-2">Expose the port. So gitea can consume the remote machine SSH port, -p 22222:22 for example.</li>
+				<li class="gt-mb-2">
+					Copy your ssh from host into the docker container
+					<ul>
+						<li class="gt-mb-2">ssh-copy-id -p 22222 user@docker-container-host</li>
+					</ul>
+				</li>
+				<li class="gt-mb-2">
+					But now, after setup all of those, still got issue on the compute because of the fatal: unable access 'http://localhost:3000'?
+					<ul>
+						<li class="gt-mb-2">
+							Install Nginx inside the docker container ( not host ), use reverse proxy on the nginx
+							<pre>
+								server {
+									listen 3000;
+									server_name localhost;
+
+									location / {
+										proxy_pass http://host.docker.internal:3000;
+										proxy_set_header Host $host;
+										proxy_set_header X-Real-IP $remote_addr;
+										proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+										proxy_set_header X-Forwarded-Proto $scheme;
+									}
+								}
+							</pre>
+						</li>
+						<li class="gt-mb-2">
+							This code above will mapped the localhost:3000 into host.docker.internal because of docker container will be sharing to each other using that domain.
+						</li>
+						<li class="gt-mb-3">
+							Result of re-running the compute after setting up the nginx, we able to clone the localhost:3000 now.
+						</li>
+						<img class="gt-mb-5" src="{{AssetUrlPrefix}}/img/getting-started/remote-machine-10.png"  />
+					</ul>
+				</li>
+			</ul>
 		</article>
 	</div>
 </div>
