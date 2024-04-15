@@ -1,0 +1,5 @@
+[core]
+    remote = aquaremote
+['remote "aquaremote"']
+    url = s3://aqua01
+    endpointurl = https://sos-de-fra-1.exo.io

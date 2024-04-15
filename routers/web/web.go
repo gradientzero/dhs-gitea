@@ -482,6 +482,7 @@ func registerRoutes(m *web.Route) {
 
 	m.Get("/pulls", reqSignIn, user.Pulls)
 	m.Get("/milestones", reqSignIn, reqMilestonesDashboardPageEnabled, user.Milestones)
+	m.Get("/start", reqSignIn, reqMilestonesDashboardPageEnabled, user.GetStarted)
 
 	// ***** START: User *****
 	// "user/login" doesn't need signOut, then logged-in users can still access this route for redirection purposes by "/user/login?redirec_to=..."
@@ -945,6 +946,9 @@ func registerRoutes(m *web.Route) {
 				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
 		}, context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader)
 		m.Get("/search", repo.SearchRepo)
+
+		m.Get("/create-from-template", repo.CreateFromTemplate)
+		m.Post("/create-from-template", web.Bind(forms.CreateRepoForm{}), repo.CreateFromTemplatePost)
 	}, reqSignIn)
 
 	m.Group("/{username}/-", func() {

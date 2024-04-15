@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
@@ -31,14 +32,19 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/convert"
+	"code.gitea.io/gitea/services/file"
 	"code.gitea.io/gitea/services/forms"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
+	files_service "code.gitea.io/gitea/services/repository/files"
 )
 
 const (
-	tplCreate       base.TplName = "repo/create"
-	tplAlertDetails base.TplName = "base/alert_details"
+	tplCreate             base.TplName = "repo/create"
+	tplAlertDetails       base.TplName = "base/alert_details"
+	tplCreateWithTemplate base.TplName = "repo/create_with_template"
+	tplRepoPath                        = "templateRepo/aqua-demo"
+	generatedFromTemplate              = "generated from template"
 )
 
 // MustBeNotEmpty render when a repo is a empty git dir
@@ -699,4 +705,150 @@ func PrepareBranchList(ctx *context.Context) {
 		brs = append([]string{ctx.Repo.Repository.DefaultBranch}, brs...)
 	}
 	ctx.Data["Branches"] = brs
+}
+
+// CreateFromTemplate render creating repository page with template
+func CreateFromTemplate(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("new_repo")
+
+	// Give default value for template to render.
+	ctx.Data["Gitignores"] = repo_module.Gitignores
+	ctx.Data["LabelTemplateFiles"] = repo_module.LabelTemplateFiles
+	ctx.Data["Licenses"] = repo_module.Licenses
+	ctx.Data["Readmes"] = repo_module.Readmes
+	ctx.Data["readme"] = "Default"
+	ctx.Data["private"] = getRepoPrivate(ctx)
+	ctx.Data["IsForcedPrivate"] = setting.Repository.ForcePrivate
+	ctx.Data["default_branch"] = setting.Repository.DefaultBranch
+
+	ctxUser := checkContextUser(ctx, ctx.FormInt64("org"))
+	if ctx.Written() {
+		return
+	}
+	ctx.Data["ContextUser"] = ctxUser
+
+	ctx.Data["repo_template_name"] = ctx.Tr("repo.template_select")
+	templateID := ctx.FormInt64("template_id")
+	if templateID > 0 {
+		templateRepo, err := repo_model.GetRepositoryByID(ctx, templateID)
+		if err == nil && access_model.CheckRepoUnitUser(ctx, templateRepo, ctxUser, unit.TypeCode) {
+			ctx.Data["repo_template"] = templateID
+			ctx.Data["repo_template_name"] = templateRepo.Name
+		}
+	}
+
+	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
+	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
+
+	ctx.HTML(http.StatusOK, tplCreateWithTemplate)
+}
+
+// getFilesFromDirectory - will be responsible and act as recursive function
+// to get list of files on each directory
+func getFilesFromDirectory(ctx *context.Context, root, path, directory string, repo *repo_model.Repository) error {
+	p := root
+	if path != "" {
+		p = fmt.Sprintf("%s%s", root, path)
+	}
+	// file.StaticFiles will read list of file inside the directory of file.StaticFiles or `templateRepo`
+	entries, err := file.StaticFiles.ReadDir(p)
+	if err != nil {
+		return fmt.Errorf("error reading directory %s/%s: %w", root, path, err)
+	}
+
+	var fus []string
+	for _, entry := range entries {
+		fullPath := p + "/" + entry.Name()
+
+		if entry.IsDir() {
+			directorySplitted := strings.Split(fullPath, "/")
+			directoryJoined := strings.Join(directorySplitted[2:], "/")
+			err := getFilesFromDirectory(ctx, root, path+"/"+entry.Name(), directoryJoined, repo)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		f, err := file.StaticFiles.ReadFile(fullPath)
+		if err != nil {
+			return fmt.Errorf("error reading file %s: ", fullPath, err)
+		}
+
+		upload, err := repo_model.NewUploadBuffer(ctx, entry.Name(), f)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return fmt.Errorf("NewUpload %s: ", err)
+		}
+
+		fus = append(fus, upload.UUID)
+	}
+
+	// git.OpenRepository will get the current repo object
+	// Goals is to find commit id
+	fromGitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return fmt.Errorf("OpenRepository %s: ", err)
+	}
+	baseSHA, err := fromGitRepo.GetBranchCommitID(repo.DefaultBranch)
+	if err != nil {
+		baseSHA = ""
+	}
+
+	// UploadRepoFiles will responsible to push every files into it's own directory
+	if err = files_service.UploadRepoFiles(ctx, repo, ctx.Doer, &files_service.UploadRepoFileOptions{
+		LastCommitID: baseSHA,
+		OldBranch:    repo.DefaultBranch,
+		NewBranch:    repo.DefaultBranch,
+		TreePath:     directory,
+		Message:      generatedFromTemplate,
+		Files:        fus,
+		Signoff:      false,
+	}); err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return fmt.Errorf("UploadRepoFiles %s: ", err)
+	}
+
+	return nil
+}
+
+// CreateFromTemplatePost will creating repository using provided template
+func CreateFromTemplatePost(ctx *context.Context) {
+	form := web.GetForm(ctx).(*forms.CreateRepoForm)
+
+	ctxUser := checkContextUser(ctx, form.UID)
+	if ctx.Written() {
+		return
+	}
+	if ctx.HasError() {
+		ctx.HTML(http.StatusOK, tplCreateWithTemplate)
+		return
+	}
+
+	ctx.Data["ContextUser"] = ctxUser
+
+	repo, err := repo_service.CreateRepository(ctx, ctx.Doer, ctxUser, repo_service.CreateRepoOptions{
+		Name: form.RepoName,
+	})
+	if err != nil {
+		handleCreateError(ctx, ctxUser, err, "CreateFromTemplatePost", tplCreateWithTemplate, form)
+		return
+	}
+
+	var filesWG sync.WaitGroup
+	filesWG.Add(1)
+	go func() {
+		// Will pickup files from directory
+		// Also will submitting the files and commit to the repo
+		err := getFilesFromDirectory(ctx, tplRepoPath, "", "", repo)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+		}
+		filesWG.Done()
+	}()
+	filesWG.Wait()
+
+	log.Trace("Repository created [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
+	ctx.Redirect(repo.Link())
 }

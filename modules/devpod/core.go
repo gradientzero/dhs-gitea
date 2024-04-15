@@ -25,8 +25,7 @@ func Execute(privateKey, user, host string, port int32,
 	config map[string][]org_model.OrgDevpodCredential,
 	sendStream func(string),
 ) error {
-
-	//gitUrl := "git@gitlab.com:grz1/aqua-research.git" // NOTE: make sure to trim, will get surprise if there is space
+	// gitUrl := "git@gitlab.com:grz1/aqua-research.git" // NOTE: make sure to trim, will get surprise if there is space
 
 	providerId := xid.New().String()
 	workSpaceId := xid.New().String()
@@ -52,7 +51,7 @@ func Execute(privateKey, user, host string, port int32,
 	// Important for line ending for correct
 	privateKey = strings.Replace(privateKey, "\r\n", "\n", -1)
 	// also make sure there is new line in end of file
-	err := os.WriteFile(privateKeyFile, []byte(privateKey+"\n"), 0600)
+	err := os.WriteFile(privateKeyFile, []byte(privateKey+"\n"), 0o600)
 	if err != nil {
 		log.Error("Failing creating private key file: %v", err)
 	}
@@ -116,7 +115,7 @@ func Execute(privateKey, user, host string, port int32,
 
 	// dvc-script.sh content exist
 	if b.String() != "" {
-		//devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
+		// devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
 		cmd = exec.Command("devpod", "ssh", workSpaceId,
 			"--command", "[ -f dvc-script.sh ] && chmod +x dvc-script.sh && bash dvc-script.sh")
 		err = getOutputCommand(cmd, sendStream)
@@ -125,14 +124,14 @@ func Execute(privateKey, user, host string, port int32,
 		}
 	} else {
 
-		//devpod ssh <workspace-id> --command 'dvc pull'
+		// devpod ssh <workspace-id> --command 'dvc pull'
 		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
 		err = getOutputCommand(cmd, sendStream)
 		if err != nil {
 			log.Error("Failing to add remote: %v", err)
 		}
 
-		//devpod ssh <workspace-id> --command 'dvc exp run'
+		// devpod ssh <workspace-id> --command 'dvc exp run'
 		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
 		err = getOutputCommand(cmd, sendStream)
 		if err != nil {
@@ -141,45 +140,45 @@ func Execute(privateKey, user, host string, port int32,
 
 	}
 
-	//devpod ssh <workspace-id> --command 'git add .'
+	// devpod ssh <workspace-id> --command 'git add .'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git add .")
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod ssh <workspace-id> --command 'git config user.name xxx'
+	// devpod ssh <workspace-id> --command 'git config user.name xxx'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name "+gitUser)
 	if err := cmd.Run(); err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod ssh <workspace-id> --command 'git config user.email xxx'
+	// devpod ssh <workspace-id> --command 'git config user.email xxx'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email "+gitEmail)
 	if err = getOutputCommand(cmd, sendStream); err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
+	// devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
 	if err = getOutputCommand(cmd, sendStream); err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod ssh <workspace-id> --command 'git push origin'
+	// devpod ssh <workspace-id> --command 'git push origin'
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git push origin")
 	if err = getOutputCommand(cmd, sendStream); err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod stop <workspace-id>
+	// devpod stop <workspace-id>
 	cmd = exec.Command("devpod", "stop", workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	//devpod delete <workspace-id>
+	// devpod delete <workspace-id>
 	cmd = exec.Command("devpod", "delete", workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {
@@ -193,12 +192,20 @@ func Execute(privateKey, user, host string, port int32,
 		log.Error("Failing to add provider: %v", err)
 	}
 
+	// running python script
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python3 main.py")
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python main.py")
+		if err := getOutputCommand(cmd, sendStream); err != nil {
+			log.Error("Failed to run main.py: %v", err)
+		}
+	}
+
 	return err
 }
 
 // getOutputCommand is a helper function to get the stdout and stderr of a command and send it to the client
 func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
-
 	// Create a pipe for reading the command's output
 	outReader, err := cmd.StdoutPipe()
 	if err != nil {
@@ -315,7 +322,7 @@ echo password=$%s
 // Returns an error.
 func (g *GitCredential) Set() error {
 	// create a file to store the script
-	err := os.WriteFile(g.scriptPath, []byte(g.scriptContent), 0600)
+	err := os.WriteFile(g.scriptPath, []byte(g.scriptContent), 0o600)
 	if err != nil {
 		log.Error("Failing creating git creds file: %v", err)
 		return err
