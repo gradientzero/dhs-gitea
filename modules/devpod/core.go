@@ -64,9 +64,6 @@ func Execute(privateKey, user, host string, port int32,
 	}()
 
 	// devpod provider add ssh --name <provider-id> -o HOST=vagrant@localhost -o PORT=2222 -o EXTRA_FLAGS="-i /tmp/private_key"
-	fmt.Println("devpod", "provider", "add", "ssh", "--name", providerId,
-		"-o", "HOST="+user+"@"+host, "-o", "PORT="+strconv.Itoa(int(port)),
-		"-o", "EXTRA_FLAGS=-i "+privateKeyFile)
 	cmd := exec.Command("devpod", "provider", "add", "ssh", "--name", providerId,
 		"-o", "HOST="+user+"@"+host, "-o", "PORT="+strconv.Itoa(int(port)),
 		"-o", "EXTRA_FLAGS=-i "+privateKeyFile) // Don't use \" in EXTRA_FLAGS for some reason it not working
@@ -80,7 +77,6 @@ func Execute(privateKey, user, host string, port int32,
 
 	// add branch to gitUrl
 	gitUrl = gitUrl + "@" + gitBranch
-	fmt.Println("devpod", "up", workSpaceId, "--source=git:"+gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
 	cmd = exec.Command("devpod", "up", workSpaceId, "--source=git:"+gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {
@@ -88,14 +84,12 @@ func Execute(privateKey, user, host string, port int32,
 	}
 
 	for key, v := range config {
-		fmt.Println("devpod", "ssh", workSpaceId, "--command", "echo ['remote \""+key+"\"'] >> .dvc/config.local")
 		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo ['remote \""+key+"\"'] >> .dvc/config.local")
 		err := getOutputCommand(cmd, sendStream)
 		if err != nil {
 			log.Error("Failing to add remote: %v", err)
 		}
 		for _, value := range v {
-			fmt.Println("devpod", "ssh", workSpaceId, "--command", "echo "+value.Key+"="+value.Value+" >> .dvc/config.local")
 			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo "+value.Key+"="+value.Value+" >> .dvc/config.local")
 			err := getOutputCommand(cmd, sendStream)
 			if err != nil {
@@ -104,7 +98,6 @@ func Execute(privateKey, user, host string, port int32,
 		}
 	}
 
-	fmt.Println("devpod", "ssh", workSpaceId, "--command", "export DEVPOD_WORKSPACE_ID="+workSpaceId)
 	cmd = exec.Command("devpod", "ssh", workSpaceId,
 		"--command", "export DEVPOD_WORKSPACE_ID="+workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
@@ -112,8 +105,6 @@ func Execute(privateKey, user, host string, port int32,
 		log.Error("Failing to add remote: %v", err)
 	}
 
-	fmt.Println("devpod", "ssh", workSpaceId,
-		"--command", "cat dvc-script.sh")
 	cmd = exec.Command("devpod", "ssh", workSpaceId,
 		"--command", "cat dvc-script.sh")
 	var b bytes.Buffer
@@ -202,11 +193,10 @@ func Execute(privateKey, user, host string, port int32,
 	}
 
 	// running python script
-	cmd = exec.Command("python3", "main.py")
-	if err := cmd.Run(); err != nil {
-		// if failed, try to use `python`
-		cmd = exec.Command("python", "main.py")
-		if err := cmd.Run(); err != nil {
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python3 main.py")
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python main.py")
+		if err := getOutputCommand(cmd, sendStream); err != nil {
 			log.Error("Failed to run main.py: %v", err)
 		}
 	}

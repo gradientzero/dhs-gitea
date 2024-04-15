@@ -22,3 +22,5 @@ RUN pip install -r /tmp/requirements.txt && \
 COPY --chown=nonroot:1000 requirements-dev.txt /tmp/requirements-dev.txt
 RUN pip install -r /tmp/requirements-dev.txt && \
     rm /tmp/requirements-dev.txt
+
+COPY main.py .
