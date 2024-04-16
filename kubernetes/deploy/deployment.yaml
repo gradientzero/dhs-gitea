@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: dhs-gitea-deployment
+  name: dhs-gitea-deployment
+  namespace: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dhs-gitea
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: dhs-gitea
+    spec:
+      containers:
+      - image: gradient0/dhs-gitea:latest
+        name: dhs-gitea
+        ports:
+          - containerPort: 3000
+            name: web
+          - containerPort: 22
+            name: ssh
+        envFrom:
+          - configMapRef:
+              name: dhs-gitea-cm
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: dhs-gitea-mysql
+  name: dhs-gitea-mysql
+  namespace: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dhs-gitea-mysql
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: dhs-gitea-mysql
+    spec:
+      containers:
+      - image: mysql:8.3.0
+        name: mysql
+        ports:
+          - containerPort: 3306
+            name: sql
+        volumeMounts:
+          - name: sql-storage
+            mountPath: /data/sql
+        envFrom:
+          - configMapRef:
+              name: dhs-gitea-cm
+      volumes:
+      - name: sql-storage
+        emptyDir: {}
