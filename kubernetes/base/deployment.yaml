@@ -5,7 +5,6 @@ metadata:
   labels:
     app: dhs-gitea-deployment
   name: dhs-gitea-deployment
-  namespace: gitea
 spec:
   replicas: 1
   selector:
@@ -36,7 +35,6 @@ metadata:
   labels:
     app: dhs-gitea-mysql
   name: dhs-gitea-mysql
-  namespace: gitea
 spec:
   replicas: 1
   selector:

@@ -5,7 +5,6 @@ metadata:
   labels:
     app: dhs-gitea-svc
   name: dhs-gitea-svc
-  namespace: gitea
 spec:
   ports:
   - port: 3000
@@ -27,7 +26,6 @@ metadata:
   labels:
     app: dhs-gitea-mysql-svc
   name: dhs-gitea-mysql-svc
-  namespace: gitea
 spec:
   ports:
   - port: 3306
