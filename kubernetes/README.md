@@ -143,9 +143,9 @@ There is a weird url exists on this configmap file, you can see `GITEA__database
 
 That is how kubernetes manifest communicate to each others, how the Gitea application communicate to the MySQL.
 
-- `dhs-gitea-mysql-svc` is the service name, can check inside `base/service.yaml`
+- `dhs-gitea-mysql-svc` is the service name, can check inside `app1/service.yaml`
 ```
-## file: base/service.yaml
+## file: app1/service.yaml
 ...
   ports:
   - port: 3306
@@ -158,7 +158,7 @@ That is how kubernetes manifest communicate to each others, how the Gitea applic
 
 - `.gitea` is the namespace name inside the service file above.
 - `.svc.cluster.local` is what kubernetes use to indicates which manifest we're pointing at, in this case it's `service`
-- `:3306` need to add the port specify inside the `base/service.yaml`
+- `:3306` need to add the port specify inside the `app1/service.yaml`
 
 So basically that is all the explanation on the URL that you maybe wonder what is that, because you can't access localhost:3306 inside of the kubernetes.
 
@@ -321,7 +321,9 @@ We change the `/etc/hosts` to add the mapper to our specified ingress
 127.0.0.1       app3.gitea.local
 ```
 
-6. Open your `app3/config.yaml` update this part `GITEA__database__HOST`
+6.  Open your `app3/service.yaml` update the part that specified in `app2/service.yaml`
+
+7. Open your `app3/config.yaml` update this part `GITEA__database__HOST`, `GITEA_PORT`, `GITEA_SSH_PORT`
 
 ```
 ## file: /etc/hosts
@@ -333,11 +335,16 @@ data:
   GITEA__database__DB_TYPE: "mysql"
   GITEA__database__HOST: "dhs-gitea-mysql-svc.app1.svc.cluster.local:3306" ## this one
   ...
+  GITEA_PORT: "3000" # this one
+  GITEA_SSH_PORT: "2222" # this one
 ```
 
-Change the value highlighted above using `dhs-gitea-mysql-svc.[YOUR_NAMESPACE].svc.cluster.local:3306`
+Change the value highlighted above: 
+- `GITEA__database__HOST: dhs-gitea-mysql-svc.[YOUR_NAMESPACE].svc.cluster.local:3306`
+- `GITEA_PORT: PORT same as service.yaml`
+- `GITEA_SSH_PORT: PORT same as service.yaml`
 
-7. After ingress and env setup been setting up, now it's time to deploy our app on the minikube cluster
+8. After ingress and env setup been setting up, now it's time to deploy our app on the minikube cluster
 ```
 cd kubernetes/app3
 kubectl apply -k .
@@ -347,9 +354,9 @@ Now we can visit `app3.gitea.local`
 ![gitea app3](./docs/gitea-app3.png)
 
 
-8. After setting up `app3.gitea.local` and you doing a bunch of registration, try to visit `app1.gitea.local` you can see both living in the different world, created account at `app3` can't be use at `app1`
+9. After setting up `app3.gitea.local` and you doing a bunch of registration, try to visit `app1.gitea.local` you can see both living in the different world, created account at `app3` can't be use at `app1`
 
-9. Key Points on Multi Instance with Different Subdomain.
+10. Key Points on Multi Instance with Different Subdomain.
 
 - Copy `app1` into `app3` or any name you prefer
 - `app3/namespace.yaml` change the namespace name here

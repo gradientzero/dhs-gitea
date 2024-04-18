@@ -7,4 +7,5 @@ resources:
 - namespace.yaml
 - config.yaml
 - ../base
+- service.yaml
 - ingress.yaml
