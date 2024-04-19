@@ -8,6 +8,10 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  tls:
+  - hosts:
+      - sandbox.detabord.com
+    secretName: sandbox-detabord-tls
   rules:
   - host: dhs.detabord.com
     http:
@@ -19,10 +23,3 @@ spec:
             name: dhs-gitea-svc
             port:
               number: 3000
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: dhs-gitea-svc
-            port:
-              number: 2222
