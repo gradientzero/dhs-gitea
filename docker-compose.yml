@@ -19,7 +19,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "127.0.0.1:${GITEA_PORT:-3000}:3000"
-      - "127.0.0.1:${GITEA_SSH_PORT:-222}:22"
+      - "0.0.0.0:${GITEA_SSH_PORT:-222}:22"
     depends_on:
       - db
 
