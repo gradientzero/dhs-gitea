@@ -63,13 +63,21 @@ func IsRepoURLAccessible(ctx context.Context, url string) bool {
 }
 
 // InitRepository initializes a new Git repository.
-func InitRepository(ctx context.Context, repoPath string, bare bool) error {
+func InitRepository(ctx context.Context, repoPath string, bare bool, objectFormatName string) error {
 	err := os.MkdirAll(repoPath, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	cmd := NewCommand(ctx, "init")
+
+	if !IsValidObjectFormat(objectFormatName) {
+		return fmt.Errorf("invalid object format: %s", objectFormatName)
+	}
+	if DefaultFeatures().SupportHashSha256 {
+		cmd.AddOptionValues("--object-format", objectFormatName)
+	}
+
 	if bare {
 		cmd.AddArguments("--bare")
 	}
@@ -86,7 +94,8 @@ func (repo *Repository) IsEmpty() (bool, error) {
 			Stdout: &output,
 			Stderr: &errbuf,
 		}); err != nil {
-		if err.Error() == "exit status 1" && errbuf.String() == "" {
+		if (err.Error() == "exit status 1" && strings.TrimSpace(errbuf.String()) == "") || err.Error() == "exit status 129" {
+			// git 2.11 exits with 129 if the repo is empty
 			return true, nil
 		}
 		return true, fmt.Errorf("check empty: %w - %s", err, errbuf.String())
@@ -235,7 +244,7 @@ func GetLatestCommitTime(ctx context.Context, repoPath string) (time.Time, error
 		return time.Time{}, err
 	}
 	commitTime := strings.TrimSpace(stdout)
-	return time.Parse(GitTimeLayout, commitTime)
+	return time.Parse("Mon Jan _2 15:04:05 2006 -0700", commitTime)
 }
 
 // DivergeObject represents commit count diverging commits
@@ -247,7 +256,7 @@ type DivergeObject struct {
 // GetDivergingCommits returns the number of commits a targetBranch is ahead or behind a baseBranch
 func GetDivergingCommits(ctx context.Context, repoPath, baseBranch, targetBranch string) (do DivergeObject, err error) {
 	cmd := NewCommand(ctx, "rev-list", "--count", "--left-right").
-		AddDynamicArguments(baseBranch + "..." + targetBranch)
+		AddDynamicArguments(baseBranch + "..." + targetBranch).AddArguments("--")
 	stdout, _, err := cmd.RunStdString(&RunOpts{Dir: repoPath})
 	if err != nil {
 		return do, err

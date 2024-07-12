@@ -40,7 +40,7 @@ func Update(ctx context.Context, pullLimit, pushLimit int) error {
 	}
 	log.Trace("Doing: Update")
 
-	handler := func(idx int, bean any) error {
+	handler := func(bean any) error {
 		var repo *repo_model.Repository
 		var mirrorType SyncType
 		var referenceID int64
@@ -54,7 +54,7 @@ func Update(ctx context.Context, pullLimit, pushLimit int) error {
 			mirrorType = PullMirrorType
 			referenceID = m.RepoID
 		} else if m, ok := bean.(*repo_model.PushMirror); ok {
-			if m.GetRepository() == nil {
+			if m.GetRepository(ctx) == nil {
 				log.Error("Disconnected push-mirror found: %d", m.ID)
 				return nil
 			}
@@ -90,8 +90,8 @@ func Update(ctx context.Context, pullLimit, pushLimit int) error {
 
 	pullMirrorsRequested := 0
 	if pullLimit != 0 {
-		if err := repo_model.MirrorsIterate(ctx, pullLimit, func(idx int, bean any) error {
-			if err := handler(idx, bean); err != nil {
+		if err := repo_model.MirrorsIterate(ctx, pullLimit, func(_ int, bean any) error {
+			if err := handler(bean); err != nil {
 				return err
 			}
 			pullMirrorsRequested++
@@ -105,7 +105,7 @@ func Update(ctx context.Context, pullLimit, pushLimit int) error {
 	pushMirrorsRequested := 0
 	if pushLimit != 0 {
 		if err := repo_model.PushMirrorsIterate(ctx, pushLimit, func(idx int, bean any) error {
-			if err := handler(idx, bean); err != nil {
+			if err := handler(bean); err != nil {
 				return err
 			}
 			pushMirrorsRequested++

@@ -178,12 +178,6 @@ func Init() {
 			}()
 
 			rIndexer = elasticsearch.NewIndexer(setting.Indexer.RepoConnStr, setting.Indexer.RepoIndexerName)
-			if err != nil {
-				cancel()
-				(*globalIndexer.Load()).Close()
-				close(waitChannel)
-				log.Fatal("PID: %d Unable to create the elasticsearch Repository Indexer connstr: %s Error: %v", os.Getpid(), setting.Indexer.RepoConnStr, err)
-			}
 			existed, err = rIndexer.Init(ctx)
 			if err != nil {
 				cancel()
@@ -288,7 +282,7 @@ func populateRepoIndexer(ctx context.Context) {
 			return
 		default:
 		}
-		ids, err := repo_model.GetUnindexedRepos(repo_model.RepoIndexerTypeCode, maxRepoID, 0, 50)
+		ids, err := repo_model.GetUnindexedRepos(ctx, repo_model.RepoIndexerTypeCode, maxRepoID, 0, 50)
 		if err != nil {
 			log.Error("populateRepoIndexer: %v", err)
 			return

@@ -57,7 +57,7 @@ func (m *Message) ToMessage() *gomail.Message {
 		msg.SetHeader(header, m.Headers[header]...)
 	}
 
-	if len(setting.MailService.SubjectPrefix) > 0 {
+	if setting.MailService.SubjectPrefix != "" {
 		msg.SetHeader("Subject", setting.MailService.SubjectPrefix+" "+m.Subject)
 	} else {
 		msg.SetHeader("Subject", m.Subject)
@@ -79,6 +79,14 @@ func (m *Message) ToMessage() *gomail.Message {
 	if len(msg.GetHeader("Message-ID")) == 0 {
 		msg.SetHeader("Message-ID", m.generateAutoMessageID())
 	}
+
+	for k, v := range setting.MailService.OverrideHeader {
+		if len(msg.GetHeader(k)) != 0 {
+			log.Debug("Mailer override header '%s' as per config", k)
+		}
+		msg.SetHeader(k, v...)
+	}
+
 	return msg
 }
 
@@ -361,9 +369,8 @@ func (s *sendmailSender) Send(from string, to []string, msg io.WriterTo) error {
 		return err
 	} else if closeError != nil {
 		return closeError
-	} else {
-		return waitError
 	}
+	return waitError
 }
 
 // Sender sendmail mail sender
@@ -426,15 +433,12 @@ func NewContext(ctx context.Context) {
 	go graceful.GetManager().RunWithCancel(mailQueue)
 }
 
-// SendAsync send mail asynchronously
-func SendAsync(msg *Message) {
-	SendAsyncs([]*Message{msg})
-}
+// SendAsync send emails asynchronously (make it mockable)
+var SendAsync = sendAsync
 
-// SendAsyncs send mails asynchronously
-func SendAsyncs(msgs []*Message) {
+func sendAsync(msgs ...*Message) {
 	if setting.MailService == nil {
-		log.Error("Mailer: SendAsyncs is being invoked but mail service hasn't been initialized")
+		log.Error("Mailer: SendAsync is being invoked but mail service hasn't been initialized")
 		return
 	}
 
