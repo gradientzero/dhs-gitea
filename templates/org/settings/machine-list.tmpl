@@ -1,0 +1,36 @@
+{{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings machine")}}
+
+			<div class="org-setting-content">
+				<h4 class="ui top attached header">
+					{{ctx.Locale.Tr "org.settings.machine_form"}}
+
+					<div class="sub header gt-mt-3" style="padding-right: 8rem">
+						Overview of all remote instances available. When executing on a remote machine,
+						a connection between the platform and the remote machine is established via SSH - using public-key.
+						For this, the platform's public key must be known to the remote machine.
+						You can manage the SSH keys in 'SSH Keys'.
+						A remote machine will reject a connection if platform's public key was not added to authorized_keys beforehand.
+					</div>
+
+					<div class="ui right">
+						<a href="{{.Link}}/new" class="ui primary tiny toggle button">
+							{{ctx.Locale.Tr "org.settings.create_machine"}}
+						</a>
+					</div>
+				</h4>
+
+				<script type="module">
+					// Initializing data from template to Vue
+					const data = {
+						link: "{{$.Link}}",
+						csrfToken : "{{$.CsrfToken}}",
+						machines: [{{range .Machines}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
+					}
+					window.config.settingsMachineData = data;
+				</script>
+
+				<!-- Vue mount -->
+				<div id="setting-machine-app" class="ui attached segment"></div>
+
+			</div>
+{{template "org/settings/layout_footer" .}}

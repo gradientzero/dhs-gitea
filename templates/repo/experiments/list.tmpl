@@ -1,0 +1,32 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository">
+	{{template "repo/header" .}}
+
+	<script type="module">
+		// Initializing data from template to Vue
+		const data = {
+			selectedBranch: "{{.BranchName}}",
+			selectedTag: "{{.TagName}}",
+		};
+		window.config.experimentData = data;
+	</script>
+	<div class="ui container">
+		<h2 class="ui dividing header gt-df gt-sb gt-pb-3">
+			<div>
+				{{ctx.Locale.Tr "repo.experiments.list"}}
+			</div>
+
+			<!-- Dropdown select branch -->
+			{{template "repo/branch_dropdown" dict "root" .
+				"disableCreateBranch" true
+				"branchURLPrefix"  "experiments?branch="
+				"tagURLPrefix" "experiments?tag="}}
+		</h2>
+		<!-- Vue mount -->
+		<div id="experiment-app"></div>
+	</div>
+
+	{{/* TODO:		{{template "base/alert" .}}*/}}
+</div>
+
+{{template "base/footer" .}}

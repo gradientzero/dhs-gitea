@@ -1,0 +1,46 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository projects edit-project new milestone">
+	{{template "repo/header" .}}
+	<div class="ui container">
+
+		<!-- Start of Dataset page -->
+		<h2 class="ui dividing header">
+			{{ctx.Locale.Tr "repo.datasets.new"}}
+			<div class="sub header">{{ctx.Locale.Tr "repo.datasets.new_subheader"}}</div>
+		</h2>
+
+		{{template "base/alert" .}}
+
+		<form class="ui form" action="{{.Link}}" method="post">
+			{{.CsrfTokenHtml}} {{/* That one come from context directly */}}
+			<div>
+
+				<div class="field {{if .Err_Name}}error{{end}}">
+					<label>{{ctx.Locale.Tr "repo.datasets.name"}}</label>
+					<input name="name" placeholder="{{ctx.Locale.Tr "repo.datasets.name"}}" value="{{.name}}" autofocus required>
+				</div>
+
+				<div class="field {{if .Err_Url}}error{{end}}">
+					<label>{{ctx.Locale.Tr "repo.datasets.url"}}</label>
+					<input name="url" placeholder="{{ctx.Locale.Tr "repo.datasets.url"}}" value="{{.url}}" autofocus required>
+				</div>
+
+			</div>
+
+			<div class="divider"></div>
+
+			<div class="gt-text-right">
+				<a class="ui cancel button" href="{{$.CancelLink}}">
+					{{ctx.Locale.Tr "repo.datasets.cancel"}}
+				</a>
+				<button class="ui primary button">
+					{{ctx.Locale.Tr "repo.datasets.add"}}
+				</button>
+			</div>
+		</form>
+		<!-- End of Datasets From -->
+	</div>
+
+</div>
+
+{{template "base/footer" .}}

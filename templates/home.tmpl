@@ -4,7 +4,7 @@
 		<div class="center">
 			<img class="logo" width="220" height="220" src="{{AssetUrlPrefix}}/img/logo.svg" alt="{{ctx.Locale.Tr "logo"}}">
 			<div class="hero">
-				<h1 class="ui icon header title">
+				<h1 class="ui icon header title" style="font-size: 3.5em">
 					{{AppName}}
 				</h1>
 				<h2>{{ctx.Locale.Tr "startpage.app_desc"}}</h2>
@@ -14,6 +14,10 @@
 	<div class="ui stackable middle very relaxed page grid">
 		<div class="eight wide center column">
 			<h1 class="hero ui icon header">
+				{{svg "octicon-git-branch"}} {{ctx.Locale.Tr "startpage.dvc"}}
+			</h1>
+			<p class="large">
+				{{ctx.Locale.Tr "startpage.dvc_desc" | Str2html}}
 				{{svg "octicon-flame"}} {{ctx.Locale.Tr "startpage.install"}}
 			</h1>
 			<p class="large">
@@ -22,6 +26,10 @@
 		</div>
 		<div class="eight wide center column">
 			<h1 class="hero ui icon header">
+				{{svg "octicon-graph"}} {{ctx.Locale.Tr "startpage.machine_learning"}}
+			</h1>
+			<p class="large">
+				{{ctx.Locale.Tr "startpage.machine_learning_desc" | Str2html}}
 				{{svg "octicon-device-desktop"}} {{ctx.Locale.Tr "startpage.platform"}}
 			</h1>
 			<p class="large">
@@ -32,6 +40,10 @@
 	<div class="ui stackable middle very relaxed page grid">
 		<div class="eight wide center column">
 			<h1 class="hero ui icon header">
+				{{svg "octicon-flame"}} {{ctx.Locale.Tr "startpage.git_power"}}
+			</h1>
+			<p class="large">
+				{{ctx.Locale.Tr "startpage.git_power_desc" | Str2html}}
 				{{svg "octicon-rocket"}} {{ctx.Locale.Tr "startpage.lightweight"}}
 			</h1>
 			<p class="large">
@@ -40,6 +52,10 @@
 		</div>
 		<div class="eight wide center column">
 			<h1 class="hero ui icon header">
+				{{svg "octicon-device-desktop"}} {{ctx.Locale.Tr "startpage.remote_dev"}}
+			</h1>
+			<p class="large">
+				{{ctx.Locale.Tr "startpage.remote_dev_desc" | Str2html}}
 				{{svg "octicon-code"}} {{ctx.Locale.Tr "startpage.license"}}
 			</h1>
 			<p class="large">

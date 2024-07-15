@@ -524,6 +524,22 @@ type EditProjectColumnForm struct {
 	Color   string `binding:"MaxSize(7)"`
 }
 
+// Datasets Form
+// Sorry, No ASCII Art here
+
+// CreateDatasetForm form for creating dataset
+type CreateDatasetForm struct {
+	Name string `binding:"Required;MaxSize(100)"`
+	Url  string
+}
+
+//    _____  .__.__                   __
+//   /     \ |__|  |   ____   _______/  |_  ____   ____   ____
+//  /  \ /  \|  |  | _/ __ \ /  ___/\   __\/  _ \ /    \_/ __ \
+// /    Y    \  |  |_\  ___/ \___ \  |  | (  <_> )   |  \  ___/
+// \____|__  /__|____/\___  >____  > |__|  \____/|___|  /\___  >
+//         \/             \/     \/                   \/     \/
+
 // CreateMilestoneForm form for creating milestone
 type CreateMilestoneForm struct {
 	Title    string `binding:"Required;MaxSize(50)"`

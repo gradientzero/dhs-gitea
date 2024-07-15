@@ -113,3 +113,10 @@ prime/
 
 # Manpage
 /man
+
+# Ignore env file docker
+stack.env
+portainer.env
+docker-compose-dev.yml
+.env
+.env.dockerhub

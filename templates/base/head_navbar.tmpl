@@ -52,6 +52,7 @@
 		{{else}}
 			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{ctx.Locale.Tr "explore"}}</a>
 		{{end}}
+		<a class="item{{if .PageIsGetStarted}} active{{end}}" href="{{AppSubUrl}}/start">{{ctx.Locale.Tr "start"}}</a>
 
 		{{template "custom/extra_links" .}}
 

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: dhs-gitea-svc
+  name: dhs-gitea-svc
+spec:
+  ports:
+  - port: 4000 # Adding new apps remember to change this to different port
+    protocol: TCP
+    targetPort: 3000
+    name: web
+  - port: 2223 # Adding new apps remember to change this to different port
+    protocol: TCP
+    targetPort: 22
+    name: ssh
+  type: LoadBalancer
+  selector:
+    app: dhs-gitea
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: dhs-gitea-mysql-svc
+  name: dhs-gitea-mysql-svc
+spec:
+  ports:
+  - port: 3307 # Adding new apps remember to change this to different port
+    protocol: TCP
+    targetPort: 3306
+    name: sql
+  selector:
+    app: dhs-gitea-mysql

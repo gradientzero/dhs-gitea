@@ -1609,3 +1609,31 @@ func SetAllowEdits(ctx *context.Context) {
 		"allow_maintainer_edit": pr.AllowMaintainerEdit,
 	})
 }
+
+// getRepositoryByName will fetch repository by it's name
+// it will output as Repository object
+func getRepositoryByName(ctx *context.Context, name string, ownerId int64) *repo_model.Repository {
+	repo, err := repo_model.GetRepositoryByName(ownerId, name)
+	if err != nil {
+		ctx.ServerError("GetRepositoryByName", err)
+		return nil
+	}
+
+	perm, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
+	if err != nil {
+		ctx.ServerError("GetUserRepoPermission", err)
+		return nil
+	}
+
+	if !perm.CanRead(unit.TypeCode) {
+		log.Trace("Permission Denied: User %-v cannot read %-v of repo %-v\n"+
+			"User in repo has Permissions: %-+v",
+			ctx.Doer,
+			unit.TypeCode,
+			ctx.Repo,
+			perm)
+		ctx.NotFound("getRepository", nil)
+		return nil
+	}
+	return repo
+}

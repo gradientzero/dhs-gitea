@@ -501,6 +501,7 @@ func registerRoutes(m *web.Router) {
 
 	m.Get("/pulls", reqSignIn, user.Pulls)
 	m.Get("/milestones", reqSignIn, reqMilestonesDashboardPageEnabled, user.Milestones)
+	m.Get("/start", reqSignIn, reqMilestonesDashboardPageEnabled, user.GetStarted)
 
 	// ***** START: User *****
 	// "user/login" doesn't need signOut, then logged-in users can still access this route for redirection purposes by "/user/login?redirec_to=..."
@@ -936,6 +937,32 @@ func registerRoutes(m *web.Router) {
 					addSettingsVariablesRoutes()
 				}, actions.MustEnableActions)
 
+				m.Group("/ssh-key", func() {
+					m.Get("", org.SettingsSshKeyList)
+					m.Methods("GET,POST", "/new", org.SettingsSshKeyCreate)
+					m.Post("/delete", org.SettingsSshKeyDelete)
+				})
+
+				m.Group("/machine", func() {
+					m.Get("", org.SettingsMachineList)
+					m.Methods("GET,POST", "/new", web.Bind(forms.SettingMachineForm{}), org.SettingsMachineCreate)
+					m.Methods("GET,POST", "/edit", web.Bind(forms.SettingMachineForm{}), org.SettingsMachineEdit)
+					m.Post("/delete", org.SettingsMachineDelete)
+				})
+
+				m.Group("/gitea-token", func() {
+					m.Get("", org.SettingsGiteaTokenList)
+					m.Methods("GET,POST", "/new", org.SettingsGiteaTokenCreate)
+					m.Post("/delete", org.SettingsGiteaTokenDelete)
+				})
+
+				m.Group("/devpod-credential", func() {
+					m.Get("", org.SettingsDevpodCredentialList)
+					m.Methods("GET,POST", "/new", org.SettingsDevpodCredentialCreate)
+					m.Methods("GET,POST", "/edit", org.SettingsDevpodCredentialEdit)
+					m.Post("/delete", org.SettingsDevpodCredentialDelete)
+				})
+
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
 
 				m.Group("/packages", func() {
@@ -972,6 +999,9 @@ func registerRoutes(m *web.Router) {
 		m.Get("/migrate", repo.Migrate)
 		m.Post("/migrate", web.Bind(forms.MigrateRepoForm{}), repo.MigratePost)
 		m.Get("/search", repo.SearchRepo)
+
+		m.Get("/create-from-template", repo.CreateFromTemplate)
+		m.Post("/create-from-template", web.Bind(forms.CreateRepoForm{}), repo.CreateFromTemplatePost)
 	}, reqSignIn)
 	// end "/repo": create, migrate, search
 
@@ -1374,6 +1404,47 @@ func registerRoutes(m *web.Router) {
 					m.Post("/default", repo.SetDefaultProjectColumn)
 					m.Post("/move", repo.MoveIssues)
 				})
+			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
+		}, reqRepoProjectsReader, repo.MustEnableProjects)
+
+		m.Group("/datasets", func() {
+			m.Get("", repo.Datasets) // list dataset
+			// comment out for new and delete repo
+			/*m.Group("", func() {
+				m.Get("/new", repo.NewDatasetGet)
+				m.Post("/new", web.Bind(forms.CreateDatasetForm{}), repo.NewDatasetPost)
+				m.Group("/remote/{name}", func() {
+					m.Get("/sync", repo.SyncDataset)
+					m.Get("/delete", repo.DeleteDatasetGet)
+					m.Post("/delete", repo.DeleteDatasetPost)
+				})
+			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission*/
+		}, context.RepoRef(), canEnableEditor,
+			reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
+
+		m.Group("/experiments", func() {
+			m.Get("", repo.Experiments)
+			m.Get("/table", repo.ExperimentTable)
+		}, context.RepoRef(), canEnableEditor,
+			reqRepoProjectsReader, repo.MustEnableExperiments) // TODO: check read permission
+
+		m.Group("/models", func() {
+			m.Get("", repo.Models)
+		}, context.RepoRef(), canEnableEditor,
+			reqRepoProjectsReader, repo.MustEnableModels) // TODO: check read permission
+
+		m.Group("/compute", func() {
+			m.Get("", repo.Computes)
+			m.Get("/execute", repo.ComputeExecute)
+		}, context.RepoRef(), canEnableEditor, context.RepoAssignment,
+			reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
+
+		m.Group("/actions", func() {
+			m.Get("", actions.List)
+			m.Post("/disable", reqRepoAdmin, actions.DisableWorkflowFile)
+			m.Post("/enable", reqRepoAdmin, actions.EnableWorkflowFile)
+
+			m.Group("/runs/{run}", func() {
 			})
 		}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
 	}, ignSignIn, context.RepoAssignment, reqRepoProjectsReader, repo.MustEnableRepoProjects)
