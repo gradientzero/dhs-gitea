@@ -1,15 +1,17 @@
 package dvc
 
 import (
-	"code.gitea.io/gitea/modules/context"
+	"html/template"
+	"os/exec"
+
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/services/context"
 	"github.com/go-git/go-git/v5"
-	"os/exec"
 )
 
-func ExperimentHtml(ctx *context.Context) (html string, err error) {
+func ExperimentHtml(ctx *context.Context) (html template.HTML, err error) {
 
 	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "exp", "show", "--md")

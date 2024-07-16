@@ -162,8 +162,8 @@ func GetStarted(ctx *context.Context) {
 		Private:       true,
 		AllPublic:     false, // Include also all public repositories of users and public organisations
 		AllLimited:    false, // Include also all public repositories of limited organisations
-		Archived:      util.OptionalBoolFalse,
-		HasMilestones: util.OptionalBoolTrue, // Just needs display repos has milestones
+		Archived:      optional.Some(false),
+		HasMilestones: optional.Some(true), // Just needs display repos has milestones
 	}
 
 	if ctxUser.IsOrganization() && ctx.Org.Team != nil {
@@ -212,13 +212,26 @@ func GetStarted(ctx *context.Context) {
 		}
 	}
 
-	counts, err := issues_model.CountMilestonesByRepoCondAndKw(ctx, userRepoCond, keyword, isShowClosed)
+	counts, err := issues_model.CountMilestonesMap(ctx, issues_model.FindMilestoneOptions{
+		RepoCond: userRepoCond,
+		Name:     keyword,
+		IsClosed: optional.Some(isShowClosed),
+	})
 	if err != nil {
 		ctx.ServerError("CountMilestonesByRepoIDs", err)
 		return
 	}
 
-	milestones, err := issues_model.SearchMilestones(ctx, repoCond, page, isShowClosed, sortType, keyword)
+	milestones, err := db.Find[issues_model.Milestone](ctx, issues_model.FindMilestoneOptions{
+		ListOptions: db.ListOptions{
+			Page:     page,
+			PageSize: setting.UI.IssuePagingNum,
+		},
+		RepoCond: repoCond,
+		IsClosed: optional.Some(isShowClosed),
+		SortType: sortType,
+		Name:     keyword,
+	})
 	if err != nil {
 		ctx.ServerError("SearchMilestones", err)
 		return
@@ -245,9 +258,11 @@ func GetStarted(ctx *context.Context) {
 		}
 
 		milestones[i].RenderedContent, err = markdown.RenderString(&markup.RenderContext{
-			URLPrefix: milestones[i].Repo.Link(),
-			Metas:     milestones[i].Repo.ComposeMetas(),
-			Ctx:       ctx,
+			Links: markup.Links{
+				Base: milestones[i].Repo.Link(),
+			},
+			Metas: milestones[i].Repo.ComposeMetas(ctx),
+			Ctx:   ctx,
 		}, milestones[i].Content)
 		if err != nil {
 			ctx.ServerError("RenderString", err)
@@ -315,10 +330,10 @@ func GetStarted(ctx *context.Context) {
 	ctx.Data["IsShowClosed"] = isShowClosed
 
 	pager := context.NewPagination(pagerCount, setting.UI.IssuePagingNum, page, 5)
-	pager.AddParam(ctx, "q", "Keyword")
-	pager.AddParam(ctx, "repos", "RepoIDs")
-	pager.AddParam(ctx, "sort", "SortType")
-	pager.AddParam(ctx, "state", "State")
+	pager.AddParamString("q", keyword)
+	pager.AddParamString("repos", reposQuery)
+	pager.AddParamString("sort", sortType)
+	pager.AddParamString("state", fmt.Sprint(ctx.Data["State"]))
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplGetStart)

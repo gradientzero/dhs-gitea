@@ -7,9 +7,9 @@ import (
 	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/devpod"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/services/context"
 	"github.com/buildkite/terminal-to-html/v3"
 )
 

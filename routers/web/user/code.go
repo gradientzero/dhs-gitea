@@ -4,6 +4,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
 	"code.gitea.io/gitea/models/db"
@@ -21,6 +22,7 @@ const (
 
 // CodeSearch render user/organization code search page
 func CodeSearch(ctx *context.Context) {
+	fmt.Println("code search here....")
 	if !setting.Indexer.RepoIndexerEnabled {
 		ctx.Redirect(ctx.ContextUser.HomeLink())
 		return
@@ -67,6 +69,8 @@ func CodeSearch(ctx *context.Context) {
 		ctx.ServerError("FindUserCodeAccessibleOwnerRepoIDs", err)
 		return
 	}
+
+	fmt.Println("repoIDsrepoIDs: ", repoIDs)
 
 	var (
 		total                 int

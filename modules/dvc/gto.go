@@ -2,11 +2,12 @@ package dvc
 
 import (
 	"bufio"
-	"code.gitea.io/gitea/modules/context"
-	"github.com/go-git/go-git/v5"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"code.gitea.io/gitea/services/context"
+	"github.com/go-git/go-git/v5"
 )
 
 func ParseGtoRelease(dir string) ([][]string, error) {

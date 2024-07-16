@@ -1,11 +1,12 @@
 package dvc
 
 import (
-	"code.gitea.io/gitea/modules/context"
+	"os/exec"
+
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/services/context"
 	"github.com/go-git/go-git/v5"
-	"os/exec"
 )
 
 type File struct {

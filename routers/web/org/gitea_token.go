@@ -1,10 +1,11 @@
 package org
 
 import (
+	"net/http"
+
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
-	"net/http"
+	"code.gitea.io/gitea/services/context"
 )
 
 const (

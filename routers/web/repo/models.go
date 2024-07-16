@@ -1,10 +1,11 @@
 package repo
 
 import (
-	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/dvc"
 	"net/http"
+
+	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/dvc"
+	"code.gitea.io/gitea/services/context"
 )
 
 const (

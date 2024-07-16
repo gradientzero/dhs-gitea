@@ -1405,7 +1405,7 @@ func registerRoutes(m *web.Router) {
 					m.Post("/move", repo.MoveIssues)
 				})
 			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
-		}, reqRepoProjectsReader, repo.MustEnableProjects)
+		}, reqRepoProjectsReader, repo.MustEnableRepoProjects)
 
 		m.Group("/datasets", func() {
 			m.Get("", repo.Datasets) // list dataset

@@ -37,8 +37,8 @@ import (
 	"code.gitea.io/gitea/services/forms"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
-	files_service "code.gitea.io/gitea/services/repository/files"
 	commitstatus_service "code.gitea.io/gitea/services/repository/commitstatus"
+	files_service "code.gitea.io/gitea/services/repository/files"
 )
 
 const (
@@ -47,15 +47,6 @@ const (
 	tplCreateWithTemplate base.TplName = "repo/create_with_template"
 	tplRepoPath                        = "templateRepo/aqua-demo"
 	generatedFromTemplate              = "generated from template"
-	"code.gitea.io/gitea/services/forms"
-	repo_service "code.gitea.io/gitea/services/repository"
-	archiver_service "code.gitea.io/gitea/services/repository/archiver"
-	commitstatus_service "code.gitea.io/gitea/services/repository/commitstatus"
-)
-
-const (
-	tplCreate       base.TplName = "repo/create"
-	tplAlertDetails base.TplName = "base/alert_details"
 )
 
 // MustBeNotEmpty render when a repo is a empty git dir

@@ -1613,7 +1613,7 @@ func SetAllowEdits(ctx *context.Context) {
 // getRepositoryByName will fetch repository by it's name
 // it will output as Repository object
 func getRepositoryByName(ctx *context.Context, name string, ownerId int64) *repo_model.Repository {
-	repo, err := repo_model.GetRepositoryByName(ownerId, name)
+	repo, err := repo_model.GetRepositoryByName(ctx, ownerId, name)
 	if err != nil {
 		ctx.ServerError("GetRepositoryByName", err)
 		return nil
