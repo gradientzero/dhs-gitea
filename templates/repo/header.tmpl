@@ -147,6 +147,30 @@
 						</a>
 					{{end}}
 
+				{{if and (not ctx.Consts.RepoUnitTypeProjects.UnitGlobalDisabled) (.Permission.CanRead ctx.Consts.RepoUnitTypeProjects)}}
+				<a href="{{.RepoLink}}/datasets" class="{{if .IsDatasetPage}}active {{end}}item">
+					{{svg "octicon-database"}} {{ctx.Locale.Tr "repo.dataset"}}
+				</a>
+				{{end}}
+
+				{{if and (not ctx.Consts.RepoUnitTypeProjects.UnitGlobalDisabled) (.Permission.CanRead ctx.Consts.RepoUnitTypeProjects)}}
+				<a href="{{.RepoLink}}/experiments" class="{{if .IsExperimentPage}}active {{end}}item">
+					{{svg "octicon-graph"}} {{ctx.Locale.Tr "repo.experiment"}}
+				</a>
+				{{end}}
+
+				{{if and (not ctx.Consts.RepoUnitTypeProjects.UnitGlobalDisabled) (.Permission.CanRead ctx.Consts.RepoUnitTypeProjects)}}
+				<a href="{{.RepoLink}}/models" class="{{if .IsModelPage}}active {{end}}item">
+					{{svg "octicon-stack"}} {{ctx.Locale.Tr "repo.model"}}
+				</a>
+				{{end}}
+
+				{{if and (not ctx.Consts.RepoUnitTypeProjects.UnitGlobalDisabled) (.Permission.CanRead ctx.Consts.RepoUnitTypeProjects)}}
+				<a href="{{.RepoLink}}/compute" class="{{if .IsComputePage}}active {{end}}item">
+					{{svg "octicon-server"}} {{ctx.Locale.Tr "repo.compute"}}
+				</a>
+				{{end}}
+
 					{{if .Permission.CanRead ctx.Consts.RepoUnitTypeExternalTracker}}
 						<a class="{{if .PageIsIssueList}}active {{end}}item" href="{{.RepoExternalIssuesLink}}" target="_blank" rel="noopener noreferrer">
 							{{svg "octicon-link-external"}} {{ctx.Locale.Tr "repo.issues"}}

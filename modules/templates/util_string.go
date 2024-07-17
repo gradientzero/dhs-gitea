@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/base"
+	"github.com/dustin/go-humanize"
 )
 
 type StringUtils struct{}
@@ -59,4 +60,9 @@ func (su *StringUtils) EllipsisString(s string, max int) string {
 
 func (su *StringUtils) ToUpper(s string) string {
 	return strings.ToUpper(s)
+}
+
+// FormatFileSize use in dvc file size
+func (su *StringUtils) FormatFileSize(fileSize *uint64) string {
+	return humanize.Bytes(*fileSize)
 }

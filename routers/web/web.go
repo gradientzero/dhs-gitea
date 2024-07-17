@@ -1404,51 +1404,42 @@ func registerRoutes(m *web.Router) {
 					m.Post("/default", repo.SetDefaultProjectColumn)
 					m.Post("/move", repo.MoveIssues)
 				})
-			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
-		}, reqRepoProjectsReader, repo.MustEnableRepoProjects)
-
-		m.Group("/datasets", func() {
-			m.Get("", repo.Datasets) // list dataset
-			// comment out for new and delete repo
-			/*m.Group("", func() {
-				m.Get("/new", repo.NewDatasetGet)
-				m.Post("/new", web.Bind(forms.CreateDatasetForm{}), repo.NewDatasetPost)
-				m.Group("/remote/{name}", func() {
-					m.Get("/sync", repo.SyncDataset)
-					m.Get("/delete", repo.DeleteDatasetGet)
-					m.Post("/delete", repo.DeleteDatasetPost)
-				})
-			}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission*/
-		}, context.RepoRef(), canEnableEditor,
-			reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
-
-		m.Group("/experiments", func() {
-			m.Get("", repo.Experiments)
-			m.Get("/table", repo.ExperimentTable)
-		}, context.RepoRef(), canEnableEditor,
-			reqRepoProjectsReader, repo.MustEnableExperiments) // TODO: check read permission
-
-		m.Group("/models", func() {
-			m.Get("", repo.Models)
-		}, context.RepoRef(), canEnableEditor,
-			reqRepoProjectsReader, repo.MustEnableModels) // TODO: check read permission
-
-		m.Group("/compute", func() {
-			m.Get("", repo.Computes)
-			m.Get("/execute", repo.ComputeExecute)
-		}, context.RepoRef(), canEnableEditor, context.RepoAssignment,
-			reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
-
-		m.Group("/actions", func() {
-			m.Get("", actions.List)
-			m.Post("/disable", reqRepoAdmin, actions.DisableWorkflowFile)
-			m.Post("/enable", reqRepoAdmin, actions.EnableWorkflowFile)
-
-			m.Group("/runs/{run}", func() {
 			})
 		}, reqRepoProjectsWriter, context.RepoMustNotBeArchived())
 	}, ignSignIn, context.RepoAssignment, reqRepoProjectsReader, repo.MustEnableRepoProjects)
 	// end "/{username}/{reponame}/projects"
+
+	m.Group("/{username}/{reponame}/datasets", func() {
+		m.Get("", repo.Datasets) // list dataset
+		// comment out for new and delete repo
+		/*m.Group("", func() {
+			m.Get("/new", repo.NewDatasetGet)
+			m.Post("/new", web.Bind(forms.CreateDatasetForm{}), repo.NewDatasetPost)
+			m.Group("/remote/{name}", func() {
+				m.Get("/sync", repo.SyncDataset)
+				m.Get("/delete", repo.DeleteDatasetGet)
+				m.Post("/delete", repo.DeleteDatasetPost)
+			})
+		}, reqRepoProjectsWriter, context.RepoMustNotBeArchived()) // TODO: check write permission*/
+	}, ignSignIn, context.RepoAssignment, context.RepoRef(), canEnableEditor,
+		reqRepoProjectsReader, repo.MustEnableDatasets) // TODO: check read permission
+
+	m.Group("/{username}/{reponame}/experiments", func() {
+		m.Get("", repo.Experiments)
+		m.Get("/table", repo.ExperimentTable)
+	}, ignSignIn, context.RepoAssignment, context.RepoRef(), canEnableEditor,
+		reqRepoProjectsReader, repo.MustEnableExperiments) // TODO: check read permission
+
+	m.Group("/{username}/{reponame}/models", func() {
+		m.Get("", repo.Models)
+	}, ignSignIn, context.RepoAssignment, context.RepoRef(), canEnableEditor,
+		reqRepoProjectsReader, repo.MustEnableModels) // TODO: check read permission
+
+	m.Group("/{username}/{reponame}/compute", func() {
+		m.Get("", repo.Computes)
+		m.Get("/execute", repo.ComputeExecute)
+	}, ignSignIn, context.RepoAssignment, context.RepoRef(), canEnableEditor,
+		reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
 
 	m.Group("/{username}/{reponame}/actions", func() {
 		m.Get("", actions.List)
