@@ -1,5 +1,5 @@
 <script>
-import { GET } from "../modules/fetch.js";
+import {GET} from '../modules/fetch.ts';
 
 export default {
   data() {
@@ -7,7 +7,7 @@ export default {
       loading: true,
       selectedBranch: window.config.experimentData.selectedBranch,
       selectedTag: window.config.experimentData.selectedTag,
-      experimentHtmlTable: "",
+      experimentHtmlTable: '',
     };
   },
   mounted() {
@@ -35,7 +35,7 @@ export default {
       class="markup content gt-overflow-x-scroll"
       v-html="experimentHtmlTable"
       v-else
-    ></div>
+    />
   </div>
 </template>
 

@@ -1,18 +1,18 @@
 <script>
-import { createApp } from "vue";
-import { SvgIcon } from "../svg.js";
-import { GET } from "../modules/fetch.js";
+import {createApp} from 'vue';
+import {SvgIcon} from '../svg.ts';
+import {GET} from '../modules/fetch.ts';
 
 const sfc = {
-  components: { SvgIcon },
+  components: {SvgIcon},
   data() {
     return {
       loading: false,
       machineId: null,
-      computedResult: "",
+      computedResult: '',
       canCompute: window.config.computeData.canCompute,
       machines: window.config.computeData.machines,
-      textIsLoading: "<p>Process Computing...</p>",
+      textIsLoading: '<p>Process Computing...</p>',
       branch: window.config.computeData.branch,
       tag: window.config.computeData.tag,
     };
@@ -30,7 +30,7 @@ const sfc = {
       const reader = readableStream.getReader();
       let done, value;
       while (!done) {
-        ({ value, done } = await reader.read());
+        ({value, done} = await reader.read());
         if (done) {
           return;
         }
@@ -39,11 +39,11 @@ const sfc = {
       }
     },
 
-    compute: function () {
+    compute() {
       // fetch html markup table
       const url = this.tag ? `${window.location.pathname}/execute?machineId=${this.machineId}&tag=${this.tag}` : `${window.location.pathname}/execute?machineId=${this.machineId}&branch=${this.branch}`;
       this.loading = true;
-      this.computedResult = "";
+      this.computedResult = '';
       GET(url).then(async (res) => {
         if (!res.ok) {
           this.loading = false;
@@ -51,20 +51,19 @@ const sfc = {
         }
         await this.readAllChunks(res.body);
         this.loading = false;
-        this.computedResult += "";
+        this.computedResult = String(this.computedResult);
       });
     },
   },
 };
 
-export default sfc;
-
 export function initRepoCompute() {
-  const el = document.getElementById("repo-compute-app");
+  const el = document.querySelector('#repo-compute-app');
   if (!el) return;
-  const view = createApp(sfc);
-  view.mount(el);
+  createApp(sfc).mount(el);
 }
+
+export default sfc;
 </script>
 
 <template>
@@ -86,19 +85,19 @@ export function initRepoCompute() {
       <button class="ui primary button gt-float-right">Compute</button>
     </form>
 
-    <div class="gt-clear-both"></div>
+    <div class="gt-clear-both"/>
 
     <!-- Compute result will here -->
     <div v-if="computedResult !== '' || loading">
       <div
         class="markup content gt-overflow-x-scroll term-container gt-mt-3"
         v-html="textComputedResult"
-      ></div>
+      />
     </div>
   </div>
 
   <div class="empty center aligned" v-else>
-    <SvgIcon name="octicon-server" :size="32" />
+    <SvgIcon name="octicon-server" :size="32"/>
     <h2>You can't compute for this repository.</h2>
   </div>
 </template>

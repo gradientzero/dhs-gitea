@@ -1,11 +1,11 @@
 <script>
-
+import $ from 'jquery';
 import {createApp} from 'vue';
-import {SvgIcon} from '../svg.js';
+import {SvgIcon} from '../svg.ts';
 
 const sfc = {
   components: {SvgIcon},
-  data(){
+  data() {
     return {
       sshKeys: window.config.settingSshData.sshKeys,
       csrfToken: window.config.settingSshData.csrfToken,
@@ -13,14 +13,14 @@ const sfc = {
       selectKey: {}, // empty by default
     };
   },
-  computed:{
+  computed: {
     deleteLink() {
-      return this.$data.link + '/delete';
-    }
+      return `${this.$data.link}/delete`;
+    },
   },
   methods: {
 
-    showKey(key){
+    showKey(key) {
       this.$data.selectKey = key;
       $('#ssh-modal').modal('show');
     },
@@ -31,19 +31,19 @@ const sfc = {
       // Ref: https://stackoverflow.com/questions/25616832/how-to-use-custom-callback-in-semantic-ui-modal
       $('#ssh-delete-modal')
         .modal({
-          onApprove: function() {
+          onApprove() {
             event.target.submit();
-          }
+          },
         })
         .modal('show');
-    }
-  }
+    },
+  },
 };
 
 export default sfc;
 
-export function initOrgSettingSshKeyList(){
-  const el = document.getElementById('setting-ssh-key-app');
+export function initOrgSettingSshKeyList() {
+  const el = document.querySelector('#setting-ssh-key-app');
   if (!el) return;
 
   const view = createApp(sfc);
@@ -51,45 +51,43 @@ export function initOrgSettingSshKeyList(){
 }
 </script>
 <template>
+  <div v-if="!sshKeys.length">
+    No key has been setup yet.
+  </div>
 
-    <div v-if="!sshKeys.length">
-      No key has been setup yet.
-    </div>
+  <div v-else class="flex-list">
+    <div class="flex-item" v-for="key in sshKeys" :key="key.Name">
+      <div class="flex-item-leading text green">
+        <SvgIcon name="octicon-key" :size="32"/>
+      </div>
 
-    <div v-else class="flex-list">
-      <div class="flex-item" v-for="key in sshKeys">
-
-        <div class="flex-item-leading text green">
-          <SvgIcon name="octicon-key" :size=32 />
-        </div>
-
-        <div class="flex-item-main">
-          <div class="flex-item-title">{{key.Name}}</div>
-          <div class="flex-item-body">
-            {{ key.Fingerprint }}
-          </div>
-        </div>
-
-        <div class="flex-item-trailing">
-          <a class="ui primary tiny button" @click="showKey(key)">
-            <SvgIcon name="octicon-search" />
-          </a>
-          <form class="ui form" :action="deleteLink" method="post" @submit="deleteKey($event)">
-            <input type="hidden" name="_csrf" :value="csrfToken">
-            <input name="id" type="hidden" :value="key.ID">
-            <button type="submit" class="ui red tiny button">
-              <SvgIcon name="octicon-trash" />
-            </button>
-          </form>
+      <div class="flex-item-main">
+        <div class="flex-item-title">{{ key.Name }}</div>
+        <div class="flex-item-body">
+          {{ key.Fingerprint }}
         </div>
       </div>
+
+      <div class="flex-item-trailing">
+        <a class="ui primary tiny button" @click="showKey(key)">
+          <SvgIcon name="octicon-search"/>
+        </a>
+        <form class="ui form" :action="deleteLink" method="post" @submit="deleteKey($event)">
+          <input type="hidden" name="_csrf" :value="csrfToken">
+          <input name="id" type="hidden" :value="key.ID">
+          <button type="submit" class="ui red tiny button">
+            <SvgIcon name="octicon-trash"/>
+          </button>
+        </form>
+      </div>
     </div>
+  </div>
 
   <!--      Modal to show pubic key-->
   <div id="ssh-modal" class="ui modal">
-    <div class="header ui">{{selectKey.Name}}</div>
+    <div class="header ui">{{ selectKey.Name }}</div>
     <div class="content ui">
-      <p>{{selectKey.PublicKey}}</p>
+      <p>{{ selectKey.PublicKey }}</p>
     </div>
     <div class="actions">
       <button class="ui black deny button">

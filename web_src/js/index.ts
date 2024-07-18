@@ -5,6 +5,10 @@ import './htmx.ts';
 import {initRepoActivityTopAuthorsChart} from './components/RepoActivityTopAuthors.vue';
 import {initScopedAccessTokenCategories} from './components/ScopedAccessTokenSelector.vue';
 import {initDashboardRepoList} from './components/DashboardRepoList.vue';
+import {initOrgSettingSshKeyList} from './components/OrgSettingSshKeyList.vue';
+import {initOrgSettingMachineList} from './components/OrgSettingMachineList.vue';
+import {initOrgSettingGiteaTokenList} from './components/OrgSettingGiteaTokenList.vue';
+import {initOrgSettingDevpodCredentialList} from './components/OrgSettingDevpodCredentialList.vue';
 
 import {initGlobalCopyToClipboardListener} from './features/clipboard.ts';
 import {initContextPopups} from './features/contextpopup.ts';
@@ -92,6 +96,9 @@ import {
   initGlobalShowModal,
 } from './features/common-button.ts';
 import {initGlobalEnterQuickSubmit, initGlobalFormDirtyLeaveConfirm} from './features/common-form.ts';
+import {initDatasetsBranchChange} from './features/repo-datasets.ts';
+import {initExperimentVue} from './features/repo-experiments.ts';
+import {initRepoCompute} from './components/RepoCompute.vue';
 
 initGiteaFomantic();
 initDirAuto();
@@ -169,6 +176,10 @@ onDomReady(() => {
     initAdminSelfCheck,
 
     initDashboardRepoList,
+    initOrgSettingSshKeyList,
+    initOrgSettingMachineList,
+    initOrgSettingGiteaTokenList,
+    initOrgSettingDevpodCredentialList,
 
     initNotificationCount,
     initNotificationsTable,
@@ -213,6 +224,10 @@ onDomReady(() => {
     initRepoContributors,
     initRepoCodeFrequency,
     initRepoRecentCommits,
+
+    initDatasetsBranchChange,
+    initExperimentVue,
+    initRepoCompute,
 
     initCommitStatuses,
     initCaptcha,
