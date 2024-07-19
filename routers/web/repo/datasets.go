@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 )
 
@@ -135,7 +135,7 @@ func RenderNewDataset(ctx *context.Context) {
 }
 
 func SyncDataset(ctx *context.Context) {
-	name := ctx.Params("name")
+	name := ctx.PathParam("name")
 
 	output, err := dvc.RemotePull(ctx, dvc.Remote{
 		Name: name,
@@ -152,7 +152,7 @@ func SyncDataset(ctx *context.Context) {
 }
 
 func DeleteDatasetGet(ctx *context.Context) {
-	name := ctx.Params("name")
+	name := ctx.PathParam("name")
 
 	ctx.Data["Title"] = ctx.Tr("repo.dataset")
 	ctx.Data["Name"] = name
@@ -164,7 +164,7 @@ func DeleteDatasetGet(ctx *context.Context) {
 }
 
 func DeleteDatasetPost(ctx *context.Context) {
-	name := ctx.Params("name")
+	name := ctx.PathParam("name")
 
 	output, err := dvc.RemoteDelete(ctx, dvc.Remote{
 		Name: name,

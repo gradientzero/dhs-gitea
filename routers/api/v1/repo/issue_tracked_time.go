@@ -12,10 +12,10 @@ import (
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/utils"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 )
 
@@ -75,7 +75,7 @@ func ListTrackedTimes(ctx *context.APIContext) {
 		ctx.NotFound("Timetracker is disabled")
 		return
 	}
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
+	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.PathParamInt64(":index"))
 	if err != nil {
 		if issues_model.IsErrIssueNotExist(err) {
 			ctx.NotFound(err)
@@ -138,7 +138,7 @@ func ListTrackedTimes(ctx *context.APIContext) {
 	}
 
 	ctx.SetTotalCountHeader(count)
-	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, trackedTimes))
+	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, ctx.Doer, trackedTimes))
 }
 
 // AddTime add time manual to the given issue
@@ -181,7 +181,7 @@ func AddTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 	form := web.GetForm(ctx).(*api.AddTimeOption)
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
+	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.PathParamInt64(":index"))
 	if err != nil {
 		if issues_model.IsErrIssueNotExist(err) {
 			ctx.NotFound(err)
@@ -191,7 +191,7 @@ func AddTime(ctx *context.APIContext) {
 		return
 	}
 
-	if !ctx.Repo.CanUseTimetracker(issue, ctx.Doer) {
+	if !ctx.Repo.CanUseTimetracker(ctx, issue, ctx.Doer) {
 		if !ctx.Repo.Repository.IsTimetrackerEnabled(ctx) {
 			ctx.Error(http.StatusBadRequest, "", "time tracking disabled")
 			return
@@ -225,7 +225,7 @@ func AddTime(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToTrackedTime(ctx, trackedTime))
+	ctx.JSON(http.StatusOK, convert.ToTrackedTime(ctx, user, trackedTime))
 }
 
 // ResetIssueTime reset time manual to the given issue
@@ -264,7 +264,7 @@ func ResetIssueTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
+	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.PathParamInt64(":index"))
 	if err != nil {
 		if issues_model.IsErrIssueNotExist(err) {
 			ctx.NotFound(err)
@@ -274,7 +274,7 @@ func ResetIssueTime(ctx *context.APIContext) {
 		return
 	}
 
-	if !ctx.Repo.CanUseTimetracker(issue, ctx.Doer) {
+	if !ctx.Repo.CanUseTimetracker(ctx, issue, ctx.Doer) {
 		if !ctx.Repo.Repository.IsTimetrackerEnabled(ctx) {
 			ctx.JSON(http.StatusBadRequest, struct{ Message string }{Message: "time tracking disabled"})
 			return
@@ -283,7 +283,7 @@ func ResetIssueTime(ctx *context.APIContext) {
 		return
 	}
 
-	err = issues_model.DeleteIssueUserTimes(issue, ctx.Doer)
+	err = issues_model.DeleteIssueUserTimes(ctx, issue, ctx.Doer)
 	if err != nil {
 		if db.IsErrNotExist(err) {
 			ctx.Error(http.StatusNotFound, "DeleteIssueUserTimes", err)
@@ -337,7 +337,7 @@ func DeleteTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
+	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.PathParamInt64(":index"))
 	if err != nil {
 		if issues_model.IsErrIssueNotExist(err) {
 			ctx.NotFound(err)
@@ -347,7 +347,7 @@ func DeleteTime(ctx *context.APIContext) {
 		return
 	}
 
-	if !ctx.Repo.CanUseTimetracker(issue, ctx.Doer) {
+	if !ctx.Repo.CanUseTimetracker(ctx, issue, ctx.Doer) {
 		if !ctx.Repo.Repository.IsTimetrackerEnabled(ctx) {
 			ctx.JSON(http.StatusBadRequest, struct{ Message string }{Message: "time tracking disabled"})
 			return
@@ -356,7 +356,7 @@ func DeleteTime(ctx *context.APIContext) {
 		return
 	}
 
-	time, err := issues_model.GetTrackedTimeByID(ctx.ParamsInt64(":id"))
+	time, err := issues_model.GetTrackedTimeByID(ctx, ctx.PathParamInt64(":id"))
 	if err != nil {
 		if db.IsErrNotExist(err) {
 			ctx.NotFound(err)
@@ -376,7 +376,7 @@ func DeleteTime(ctx *context.APIContext) {
 		return
 	}
 
-	err = issues_model.DeleteTime(time)
+	err = issues_model.DeleteTime(ctx, time)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteTime", err)
 		return
@@ -422,7 +422,7 @@ func ListTrackedTimesByUser(ctx *context.APIContext) {
 		ctx.Error(http.StatusBadRequest, "", "time tracking disabled")
 		return
 	}
-	user, err := user_model.GetUserByName(ctx, ctx.Params(":timetrackingusername"))
+	user, err := user_model.GetUserByName(ctx, ctx.PathParam(":timetrackingusername"))
 	if err != nil {
 		if user_model.IsErrUserNotExist(err) {
 			ctx.NotFound(err)
@@ -455,7 +455,7 @@ func ListTrackedTimesByUser(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, trackedTimes))
+	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, ctx.Doer, trackedTimes))
 }
 
 // ListTrackedTimesByRepository lists all tracked times of the repository
@@ -567,7 +567,7 @@ func ListTrackedTimesByRepository(ctx *context.APIContext) {
 	}
 
 	ctx.SetTotalCountHeader(count)
-	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, trackedTimes))
+	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, ctx.Doer, trackedTimes))
 }
 
 // ListMyTrackedTimes lists all tracked times of the current user
@@ -629,5 +629,5 @@ func ListMyTrackedTimes(ctx *context.APIContext) {
 	}
 
 	ctx.SetTotalCountHeader(count)
-	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, trackedTimes))
+	ctx.JSON(http.StatusOK, convert.ToTrackedTimeList(ctx, ctx.Doer, trackedTimes))
 }

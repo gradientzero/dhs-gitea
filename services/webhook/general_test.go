@@ -303,6 +303,36 @@ func repositoryTestPayload() *api.RepositoryPayload {
 	}
 }
 
+func packageTestPayload() *api.PackagePayload {
+	return &api.PackagePayload{
+		Action: api.HookPackageCreated,
+		Sender: &api.User{
+			UserName:  "user1",
+			AvatarURL: "http://localhost:3000/user1/avatar",
+		},
+		Repository: nil,
+		Organization: &api.User{
+			UserName:  "org1",
+			AvatarURL: "http://localhost:3000/org1/avatar",
+		},
+		Package: &api.Package{
+			Owner: &api.User{
+				UserName:  "user1",
+				AvatarURL: "http://localhost:3000/user1/avatar",
+			},
+			Repository: nil,
+			Creator: &api.User{
+				UserName:  "user1",
+				AvatarURL: "http://localhost:3000/user1/avatar",
+			},
+			Type:    "container",
+			Name:    "GiteaContainer",
+			Version: "latest",
+			HTMLURL: "http://localhost:3000/user1/-/packages/container/GiteaContainer/latest",
+		},
+	}
+}
+
 func TestGetIssuesPayloadInfo(t *testing.T) {
 	p := issueTestPayload()
 
@@ -394,10 +424,10 @@ func TestGetIssuesPayloadInfo(t *testing.T) {
 
 	for i, c := range cases {
 		p.Action = c.action
-		text, issueTitle, attachmentText, color := getIssuesPayloadInfo(p, noneLinkFormatter, true)
+		text, issueTitle, extraMarkdown, color := getIssuesPayloadInfo(p, noneLinkFormatter, true)
 		assert.Equal(t, c.text, text, "case %d", i)
 		assert.Equal(t, c.issueTitle, issueTitle, "case %d", i)
-		assert.Equal(t, c.attachmentText, attachmentText, "case %d", i)
+		assert.Equal(t, c.attachmentText, extraMarkdown, "case %d", i)
 		assert.Equal(t, c.color, color, "case %d", i)
 	}
 }
@@ -493,10 +523,10 @@ func TestGetPullRequestPayloadInfo(t *testing.T) {
 
 	for i, c := range cases {
 		p.Action = c.action
-		text, issueTitle, attachmentText, color := getPullRequestPayloadInfo(p, noneLinkFormatter, true)
+		text, issueTitle, extraMarkdown, color := getPullRequestPayloadInfo(p, noneLinkFormatter, true)
 		assert.Equal(t, c.text, text, "case %d", i)
 		assert.Equal(t, c.issueTitle, issueTitle, "case %d", i)
-		assert.Equal(t, c.attachmentText, attachmentText, "case %d", i)
+		assert.Equal(t, c.attachmentText, extraMarkdown, "case %d", i)
 		assert.Equal(t, c.color, color, "case %d", i)
 	}
 }
