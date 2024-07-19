@@ -12,24 +12,12 @@ import (
 
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/context"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
-
-type Remote struct {
-	Name       string
-	Url        string
-	AuthorName string
-	DateAdded  time.Time
-	Link       string
-}
-
-type RemoteGitBlame struct {
-	AuthorName string
-	Date       time.Time
-}
 
 func ValidateRemoteName(name string) error {
 	if strings.Contains(name, " ") {
@@ -38,7 +26,7 @@ func ValidateRemoteName(name string) error {
 	return nil
 }
 
-func RemoteAdd(ctx *context.Context, remote Remote) (err error) {
+func RemoteAdd(ctx *context.Context, remote api.Remote) (err error) {
 
 	return executeTempRepo(ctx, func(tempRepoPath string, repo *git.Repository) error {
 
@@ -88,7 +76,7 @@ func RemoteAdd(ctx *context.Context, remote Remote) (err error) {
 	})
 }
 
-func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
+func RemoteList(ctx *context.Context) (remotes []api.Remote, err error) {
 
 	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "remote", "list")
@@ -102,7 +90,7 @@ func RemoteList(ctx *context.Context) (remotes []Remote, err error) {
 			return err
 		}
 
-		blames, err := RemoteCreatedDate(repository)
+		blames, _ := RemoteCreatedDate(repository)
 		for k, v := range remotes {
 			remoteGitBlame, ok := blames[v.Name]
 			if ok {
@@ -156,7 +144,7 @@ func changeFromProtocolToLink(protocol string, endpointurl string) string {
 	return protocol
 }
 
-func ParseRemote(ctx *context.Context, output string) (remotes []Remote) {
+func ParseRemote(ctx *context.Context, output string) (remotes []api.Remote) {
 	re := regexp.MustCompile("\\s")
 
 	sc := bufio.NewScanner(strings.NewReader(output))
@@ -181,7 +169,7 @@ func ParseRemote(ctx *context.Context, output string) (remotes []Remote) {
 		})
 
 		if len(split) == 2 {
-			remotes = append(remotes, Remote{
+			remotes = append(remotes, api.Remote{
 				Name: split[0],
 				Url:  split[1],
 				Link: changeFromProtocolToLink(split[1], endpointurl),
@@ -192,9 +180,9 @@ func ParseRemote(ctx *context.Context, output string) (remotes []Remote) {
 }
 
 // RemoteCreatedDate extract remote created date from git repo
-func RemoteCreatedDate(repo *git.Repository) (m map[string]RemoteGitBlame, err error) {
+func RemoteCreatedDate(repo *git.Repository) (m map[string]api.RemoteGitBlame, err error) {
 
-	m = make(map[string]RemoteGitBlame)
+	m = make(map[string]api.RemoteGitBlame)
 
 	// Regex To match `['remote "test"']` string and extract `test` value back
 	re := regexp.MustCompile(`\['remote "([\w\-]+)"']`)
@@ -217,7 +205,7 @@ func RemoteCreatedDate(repo *git.Repository) (m map[string]RemoteGitBlame, err e
 	for _, v := range br.Lines {
 		matches := re.FindStringSubmatch(v.Text)
 		if matches != nil {
-			m[matches[1]] = RemoteGitBlame{
+			m[matches[1]] = api.RemoteGitBlame{
 				AuthorName: v.AuthorName,
 				Date:       v.Date,
 			}
@@ -227,7 +215,7 @@ func RemoteCreatedDate(repo *git.Repository) (m map[string]RemoteGitBlame, err e
 	return m, err
 }
 
-func RemotePull(ctx *context.Context, remote Remote) (output string, err error) {
+func RemotePull(ctx *context.Context, remote api.Remote) (output string, err error) {
 
 	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "pull", "--remote", remote.Name)
@@ -246,7 +234,7 @@ func RemotePull(ctx *context.Context, remote Remote) (output string, err error) 
 	return output, err
 }
 
-func RemoteDelete(ctx *context.Context, remote Remote) (output string, err error) {
+func RemoteDelete(ctx *context.Context, remote api.Remote) (output string, err error) {
 
 	err = executeTempRepo(ctx, func(tempRepoPath string, repo *git.Repository) error {
 		cmd := exec.Command("dvc", "remote", "remove", remote.Name)

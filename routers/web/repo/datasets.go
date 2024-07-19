@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
@@ -53,22 +55,41 @@ func Datasets(ctx *context.Context) {
 		ctx.Repo.IsViewTag = true
 	}
 
-	remotes, err := dvc.RemoteList(ctx)
-	if err != nil {
-		log.Error("err when remote list: %v", err)
-		errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
-		ctx.Flash.Error(errorMsg, true)
+	remotes := []api.Remote{}
+	files := []api.File{}
+	var err error
+	var cached bool
+	cc := cache.GetCache()
+	cached, _ = cc.GetJSON("dvc-remotes", &remotes)
+
+	if !cached {
+		remotes, err = dvc.RemoteList(ctx)
+		if err != nil {
+			log.Error("err when remote list: %v", err)
+			errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
+			ctx.Flash.Error(errorMsg, true)
+		}
+
+		_ = cc.PutJSON("dvc-remotes", remotes, 60*10)
 	}
+
 	// Set branch active or selected branch
 	ctx.Data["BranchName"] = ctx.Repo.BranchName
 	ctx.Data["TagName"] = ctx.Repo.TagName
 	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 	ctx.Data["RemoteList"] = remotes
 
-	files, err := dvc.FileList(ctx)
-	if err != nil {
-		log.Error("err when remote file list: %v", err)
+	cached, _ = cc.GetJSON("dvc-files", &files)
+
+	if !cached {
+		files, err = dvc.FileList(ctx)
+		if err != nil {
+			log.Error("err when remote file list: %v", err)
+		}
+
+		_ = cc.PutJSON("dvc-files", files, 60*10)
 	}
+
 	ctx.Data["Files"] = files
 
 	ctx.HTML(http.StatusOK, tplDatasetsList)
@@ -109,7 +130,7 @@ func NewDatasetPost(ctx *context.Context) {
 		return
 	}
 
-	err = dvc.RemoteAdd(ctx, dvc.Remote{
+	err = dvc.RemoteAdd(ctx, api.Remote{
 		Name: form.Name,
 		Url:  form.Url,
 	})
@@ -137,7 +158,7 @@ func RenderNewDataset(ctx *context.Context) {
 func SyncDataset(ctx *context.Context) {
 	name := ctx.PathParam("name")
 
-	output, err := dvc.RemotePull(ctx, dvc.Remote{
+	output, err := dvc.RemotePull(ctx, api.Remote{
 		Name: name,
 	})
 
@@ -166,7 +187,7 @@ func DeleteDatasetGet(ctx *context.Context) {
 func DeleteDatasetPost(ctx *context.Context) {
 	name := ctx.PathParam("name")
 
-	output, err := dvc.RemoteDelete(ctx, dvc.Remote{
+	output, err := dvc.RemoteDelete(ctx, api.Remote{
 		Name: name,
 	})
 

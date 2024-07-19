@@ -5,20 +5,14 @@ import (
 
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/context"
 	"github.com/go-git/go-git/v5"
 )
 
-type File struct {
-	// https://stackoverflow.com/questions/10998222/json-parsing-of-int64-in-go-null-values
-	// use *int64 instead of int64 to check null value
-	Size *uint64
-	Path string
-}
-
 // ParseJsonFileInfo Parse Json File Info to DvcFile slices
-func ParseJsonFileInfo(jsonStr []byte) (result []File, err error) {
-	var files []File
+func ParseJsonFileInfo(jsonStr []byte) (result []api.File, err error) {
+	var files []api.File
 
 	err = json.Unmarshal(jsonStr, &files)
 	if err != nil {
@@ -33,7 +27,7 @@ func ParseJsonFileInfo(jsonStr []byte) (result []File, err error) {
 	return result, nil
 }
 
-func FileList(ctx *context.Context) (files []File, err error) {
+func FileList(ctx *context.Context) (files []api.File, err error) {
 	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
 		cmd := exec.Command("dvc", "list", "--dvc-only", "-R", "--size", "--json", ".")
 		cmd.Dir = tempRepoPath
