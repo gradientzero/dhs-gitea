@@ -18,6 +18,8 @@ const (
 	tplDatasetsNew    base.TplName = "repo/datasets/new"
 	tplDatasetsList   base.TplName = "repo/datasets/list"
 	tplDatasetsDelete base.TplName = "repo/datasets/delete"
+
+	datasetCacheTimeout int64 = 60 * 5 // 5 minutes
 )
 
 // MustEnableDatasets check if projects are enabled in settings
@@ -70,7 +72,7 @@ func Datasets(ctx *context.Context) {
 			ctx.Flash.Error(errorMsg, true)
 		}
 
-		_ = cc.PutJSON("dvc-remotes", remotes, 60*10)
+		_ = cc.PutJSON("dvc-remotes", remotes, datasetCacheTimeout)
 	}
 
 	// Set branch active or selected branch
@@ -87,7 +89,7 @@ func Datasets(ctx *context.Context) {
 			log.Error("err when remote file list: %v", err)
 		}
 
-		_ = cc.PutJSON("dvc-files", files, 60*10)
+		_ = cc.PutJSON("dvc-files", files, datasetCacheTimeout)
 	}
 
 	ctx.Data["Files"] = files

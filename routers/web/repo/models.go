@@ -4,12 +4,14 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
-	tplModelsList base.TplName = "repo/models/list"
+	tplModelsList     base.TplName = "repo/models/list"
+	modelCacheTimeout int64        = 60 * 5 // 5 minutes
 )
 
 // MustEnableModels check if projects are enabled in settings
@@ -34,9 +36,19 @@ func Models(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.models")
 	ctx.Data["IsModelPage"] = true // to show highlight in tab
 
-	result, err := dvc.ReleaseModel(ctx)
-	if err != nil {
-		ctx.Flash.Error(err.Error(), true)
+	result := [][]string{}
+	var err error
+	var cached bool
+	cc := cache.GetCache()
+	cached, _ = cc.GetJSON("dvc-models", &result)
+
+	if !cached {
+		result, err = dvc.ReleaseModel(ctx)
+		if err != nil {
+			ctx.Flash.Error(err.Error(), true)
+		}
+
+		_ = cc.PutJSON("dvc-models", result, modelCacheTimeout)
 	}
 
 	if len(result) > 1 {

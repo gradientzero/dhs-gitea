@@ -1,16 +1,19 @@
 package repo
 
 import (
+	"html/template"
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
-	tplExperimentsList base.TplName = "repo/experiments/list"
+	tplExperimentsList     base.TplName = "repo/experiments/list"
+	experimentCacheTimeout int64        = 60 * 5 // 5 minutes
 )
 
 // MustEnableExperiments check if projects are enabled in settings
@@ -63,11 +66,20 @@ func ExperimentTable(ctx *context.Context) {
 		ctx.Repo.IsViewTag = true
 	}
 
-	html, err := dvc.ExperimentHtml(ctx)
-	if err != nil {
-		log.Error("err when dvc experiment to html: %v", err)
+	html := template.HTML("")
+	var err error
+	var cached bool
+	cc := cache.GetCache()
+	cached, _ = cc.GetJSON("dvc-experiments", &html)
+
+	if !cached {
+		html, err = dvc.ExperimentHtml(ctx)
+		if err != nil {
+			log.Error("err when dvc experiment to html: %v", err)
+		}
+
+		_ = cc.PutJSON("dvc-experiments", html, experimentCacheTimeout)
 	}
-	//ctx.Data["Experiments"] = html
 
 	ctx.JSON(http.StatusOK, map[string]any{
 		"htmlTable": html,
