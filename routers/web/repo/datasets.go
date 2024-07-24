@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 
@@ -38,6 +39,11 @@ func MustEnableDatasets(ctx *context.Context) {
 	}*/
 }
 
+func getDatasetCacheKey(commitID string, types string) string {
+	hashBytes := sha256.Sum256([]byte(fmt.Sprintf("%s	", commitID)))
+	return fmt.Sprintf("dvc_datasets_%s:%x", types, hashBytes)
+}
+
 // Datasets show list of dataset in projects
 func Datasets(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.dataset")
@@ -62,7 +68,7 @@ func Datasets(ctx *context.Context) {
 	var err error
 	var cached bool
 	cc := cache.GetCache()
-	cached, _ = cc.GetJSON("dvc-remotes", &remotes)
+	cached, _ = cc.GetJSON(getDatasetCacheKey(ctx.Repo.CommitID, "remotes"), &remotes)
 
 	if !cached {
 		remotes, err = dvc.RemoteList(ctx)
@@ -72,7 +78,7 @@ func Datasets(ctx *context.Context) {
 			ctx.Flash.Error(errorMsg, true)
 		}
 
-		_ = cc.PutJSON("dvc-remotes", remotes, datasetCacheTimeout)
+		_ = cc.PutJSON(getDatasetCacheKey(ctx.Repo.CommitID, "remotes"), remotes, datasetCacheTimeout)
 	}
 
 	// Set branch active or selected branch
@@ -81,7 +87,7 @@ func Datasets(ctx *context.Context) {
 	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 	ctx.Data["RemoteList"] = remotes
 
-	cached, _ = cc.GetJSON("dvc-files", &files)
+	cached, _ = cc.GetJSON(getDatasetCacheKey(ctx.Repo.CommitID, "files"), &files)
 
 	if !cached {
 		files, err = dvc.FileList(ctx)
@@ -89,7 +95,7 @@ func Datasets(ctx *context.Context) {
 			log.Error("err when remote file list: %v", err)
 		}
 
-		_ = cc.PutJSON("dvc-files", files, datasetCacheTimeout)
+		_ = cc.PutJSON(getDatasetCacheKey(ctx.Repo.CommitID, "files"), files, datasetCacheTimeout)
 	}
 
 	ctx.Data["Files"] = files

@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -30,6 +32,11 @@ func MustEnableExperiments(ctx *context.Context) {
 			return
 		}
 	}*/
+}
+
+func getExperimentCacheKey(commitID string) string {
+	hashBytes := sha256.Sum256([]byte(fmt.Sprintf("%s	", commitID)))
+	return fmt.Sprintf("dvc_experiments:%x", hashBytes)
 }
 
 // Experiments show list of dataset in projects
@@ -70,7 +77,7 @@ func ExperimentTable(ctx *context.Context) {
 	var err error
 	var cached bool
 	cc := cache.GetCache()
-	cached, _ = cc.GetJSON("dvc-experiments", &html)
+	cached, _ = cc.GetJSON(getExperimentCacheKey(ctx.Repo.CommitID), &html)
 
 	if !cached {
 		html, err = dvc.ExperimentHtml(ctx)
@@ -78,7 +85,7 @@ func ExperimentTable(ctx *context.Context) {
 			log.Error("err when dvc experiment to html: %v", err)
 		}
 
-		_ = cc.PutJSON("dvc-experiments", html, experimentCacheTimeout)
+		_ = cc.PutJSON(getExperimentCacheKey(ctx.Repo.CommitID), html, experimentCacheTimeout)
 	}
 
 	ctx.JSON(http.StatusOK, map[string]any{
