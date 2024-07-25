@@ -1,16 +1,21 @@
 package repo
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"html/template"
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
-	tplExperimentsList base.TplName = "repo/experiments/list"
+	tplExperimentsList     base.TplName = "repo/experiments/list"
+	experimentCacheTimeout int64        = 60 * 5 // 5 minutes
 )
 
 // MustEnableExperiments check if projects are enabled in settings
@@ -27,6 +32,11 @@ func MustEnableExperiments(ctx *context.Context) {
 			return
 		}
 	}*/
+}
+
+func getExperimentCacheKey(commitID string) string {
+	hashBytes := sha256.Sum256([]byte(fmt.Sprintf("%s	", commitID)))
+	return fmt.Sprintf("dvc_experiments:%x", hashBytes)
 }
 
 // Experiments show list of dataset in projects
@@ -63,11 +73,20 @@ func ExperimentTable(ctx *context.Context) {
 		ctx.Repo.IsViewTag = true
 	}
 
-	html, err := dvc.ExperimentHtml(ctx)
-	if err != nil {
-		log.Error("err when dvc experiment to html: %v", err)
+	html := template.HTML("")
+	var err error
+	var cached bool
+	cc := cache.GetCache()
+	cached, _ = cc.GetJSON(getExperimentCacheKey(ctx.Repo.CommitID), &html)
+
+	if !cached {
+		html, err = dvc.ExperimentHtml(ctx)
+		if err != nil {
+			log.Error("err when dvc experiment to html: %v", err)
+		}
+
+		_ = cc.PutJSON(getExperimentCacheKey(ctx.Repo.CommitID), html, experimentCacheTimeout)
 	}
-	//ctx.Data["Experiments"] = html
 
 	ctx.JSON(http.StatusOK, map[string]any{
 		"htmlTable": html,

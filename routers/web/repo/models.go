@@ -1,15 +1,19 @@
 package repo
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"net/http"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/dvc"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
-	tplModelsList base.TplName = "repo/models/list"
+	tplModelsList     base.TplName = "repo/models/list"
+	modelCacheTimeout int64        = 60 * 5 // 5 minutes
 )
 
 // MustEnableModels check if projects are enabled in settings
@@ -28,15 +32,30 @@ func MustEnableModels(ctx *context.Context) {
 	}*/
 }
 
+func getModelCacheKey(commitID string) string {
+	hashBytes := sha256.Sum256([]byte(fmt.Sprintf("%s	", commitID)))
+	return fmt.Sprintf("dvc_models:%x", hashBytes)
+}
+
 // Models show list of models in projects
 // this tab no need to chose branch, because gto release is based on git tag
 func Models(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.models")
 	ctx.Data["IsModelPage"] = true // to show highlight in tab
 
-	result, err := dvc.ReleaseModel(ctx)
-	if err != nil {
-		ctx.Flash.Error(err.Error(), true)
+	result := [][]string{}
+	var err error
+	var cached bool
+	cc := cache.GetCache()
+	cached, _ = cc.GetJSON(getModelCacheKey(ctx.Repo.CommitID), &result)
+
+	if !cached {
+		result, err = dvc.ReleaseModel(ctx)
+		if err != nil {
+			ctx.Flash.Error(err.Error(), true)
+		}
+
+		_ = cc.PutJSON(getModelCacheKey(ctx.Repo.CommitID), result, modelCacheTimeout)
 	}
 
 	if len(result) > 1 {
