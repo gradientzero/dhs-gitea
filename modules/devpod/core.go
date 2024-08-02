@@ -192,15 +192,6 @@ func Execute(privateKey, user, host string, port int32,
 		log.Error("Failing to add provider: %v", err)
 	}
 
-	// running python script
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python3 main.py")
-	if err = getOutputCommand(cmd, sendStream); err != nil {
-		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "python main.py")
-		if err := getOutputCommand(cmd, sendStream); err != nil {
-			log.Error("Failed to run main.py: %v", err)
-		}
-	}
-
 	return err
 }
 
