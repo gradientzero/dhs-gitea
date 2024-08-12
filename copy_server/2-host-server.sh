@@ -1,11 +1,14 @@
 #!/bin/bash
+origin_server=$1
+destination_server=$2
+origin_tenant=$3
 
-# Copy files from old server
-scp -r root@95.217.101.177:/var/lib/docker/volumes/usb_db-data/ /home/xubuntu/usb_db-data
-scp -r root@95.217.101.177:/home/user/git/ /home/xubuntu/git
-scp -r root@95.217.101.177:/home/user/avatars/ /home/xubuntu/avatars
+# Copy files from origin server, probably need to be root to access /var/lib/docker/volumes
+scp -r ${origin_server}:/var/lib/docker/volumes/${origin_tenant}_db-data/ ~/db-data
+scp -r ${origin_server}:/home/user/git/ ~/git
+scp -r ${origin_server}:/home/user/avatars/ ~/avatars
 
-# Paste files to new server
-scp -r /home/xubuntu/usb_db-data root@157.90.23.177:/home/user/dhcs/usb_db-data
-scp -r /home/xubuntu/git root@157.90.23.177:/home/user/dhcs/git
-scp -r /home/xubuntu/avatars root@157.90.23.177:/home/user/dhcs/avatars
+# Paste files to destination server
+scp -r ~/db-data ${destination_server}:/home/user/db-data
+scp -r ~/git ${destination_server}:/home/user/git
+scp -r ~/avatars ${destination_server}:/home/user/avatars
