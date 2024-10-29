@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11
 
 # Add non-root user
 ARG USERNAME=nonroot
@@ -23,4 +23,8 @@ COPY --chown=nonroot:1000 requirements-dev.txt /tmp/requirements-dev.txt
 RUN pip install -r /tmp/requirements-dev.txt && \
     rm /tmp/requirements-dev.txt
 
-COPY main.py .
+# fix: https://github.com/iterative/dvc/issues/10431
+RUN pip install pygit2==1.14.1
+
+# copy all over
+# COPY . .

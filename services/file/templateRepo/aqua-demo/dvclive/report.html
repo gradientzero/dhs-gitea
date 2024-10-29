@@ -36,10 +36,10 @@
             <div style="display: flex;justify-content: center;">
                 <table>
 <thead>
-<tr><th style="text-align: right;">  myMetric</th></tr>
+<tr><th style="text-align: right;">  myMetric</th><th style="text-align: right;">  new_metric</th></tr>
 </thead>
 <tbody>
-<tr><td style="text-align: right;">       543</td></tr>
+<tr><td style="text-align: right;">       543</td><td style="text-align: right;">         333</td></tr>
 </tbody>
 </table>
             </div>
@@ -49,6 +49,14 @@
         <script type = "text/javascript">
             var spec = {"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "data": {"values": [{"step": "0", "myMetric": "543", "rev": "workspace"}]}, "title": "myMetric", "width": 300, "height": 300, "params": [{"name": "smooth", "value": 0.001, "bind": {"input": "range", "min": 0.001, "max": 1, "step": 0.001}}], "layer": [{"mark": "line", "encoding": {"x": {"field": "step", "type": "quantitative", "title": "step"}, "y": {"field": "myMetric", "type": "quantitative", "title": "myMetric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}, "tooltip": [{"field": "step", "title": "step", "type": "quantitative"}, {"field": "myMetric", "title": "myMetric", "type": "quantitative"}]}, "transform": [{"loess": "myMetric", "on": "step", "groupby": ["rev", "filename", "field", "filename::field"], "bandwidth": {"signal": "smooth"}}]}, {"mark": {"type": "line", "opacity": 0.2}, "encoding": {"x": {"field": "step", "type": "quantitative", "title": "step"}, "y": {"field": "myMetric", "type": "quantitative", "title": "myMetric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}, "tooltip": [{"field": "step", "title": "step", "type": "quantitative"}, {"field": "myMetric", "title": "myMetric", "type": "quantitative"}]}}, {"mark": {"type": "circle", "size": 10, "tooltip": {"content": "encoding"}}, "encoding": {"x": {"aggregate": "max", "field": "step", "type": "quantitative", "title": "step"}, "y": {"aggregate": {"argmax": "step"}, "field": "myMetric", "type": "quantitative", "title": "myMetric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}}}]};
             vegaEmbed('#static_myMetric', spec);
+        </script>
+    </div>
+    
+
+    <div id = "static_new_metric">
+        <script type = "text/javascript">
+            var spec = {"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "data": {"values": [{"step": "0", "new_metric": "333", "rev": "workspace"}]}, "title": "new_metric", "width": 300, "height": 300, "params": [{"name": "smooth", "value": 0.001, "bind": {"input": "range", "min": 0.001, "max": 1, "step": 0.001}}], "layer": [{"mark": "line", "encoding": {"x": {"field": "step", "type": "quantitative", "title": "step"}, "y": {"field": "new_metric", "type": "quantitative", "title": "new_metric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}, "tooltip": [{"field": "step", "title": "step", "type": "quantitative"}, {"field": "new_metric", "title": "new_metric", "type": "quantitative"}]}, "transform": [{"loess": "new_metric", "on": "step", "groupby": ["rev", "filename", "field", "filename::field"], "bandwidth": {"signal": "smooth"}}]}, {"mark": {"type": "line", "opacity": 0.2}, "encoding": {"x": {"field": "step", "type": "quantitative", "title": "step"}, "y": {"field": "new_metric", "type": "quantitative", "title": "new_metric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}, "tooltip": [{"field": "step", "title": "step", "type": "quantitative"}, {"field": "new_metric", "title": "new_metric", "type": "quantitative"}]}}, {"mark": {"type": "circle", "size": 10, "tooltip": {"content": "encoding"}}, "encoding": {"x": {"aggregate": "max", "field": "step", "type": "quantitative", "title": "step"}, "y": {"aggregate": {"argmax": "step"}, "field": "new_metric", "type": "quantitative", "title": "new_metric", "scale": {"zero": false}}, "color": {"field": "rev", "type": "nominal"}}}]};
+            vegaEmbed('#static_new_metric', spec);
         </script>
     </div>
     

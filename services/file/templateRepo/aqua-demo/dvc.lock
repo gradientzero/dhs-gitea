@@ -1,0 +1,9 @@
+schema: '2.0'
+stages:
+  simple_run:
+    cmd: python main.py
+    deps:
+    - path: code/simple.py
+      hash: md5
+      md5: 22b7a4aa19547cb506be59943de5fb5c
+      size: 760
