@@ -176,6 +176,26 @@ Short:
 - `Gitea Base URL` stays `https://sandbox.gradient0.com/`, but the port must map your `GITEA_PORT`. Can be adapted to your requirements if run on a server.
 
 
+# Connect Remote Machine
+
+Der Teil besteht aus mehreren Schritten:
+- Zunächst muss eine organistion angelegt werden
+- Anschließend kann eine neues Repository (zB aus dem Template) erstellt werden
+- Danach erstellen wir in der Organisation ein SSH Key. Wichtig: Dieser SSH Key dient NICHT dem clonen des Repositories, sondern dem Zugriff über SSH (public) auf die Maschine.
+- Der neue Public Key des SSH Keys wird in destination Maschine unter `<user-home>/.ssh/authorized_keys` abgelegt. Bei root ist das `/root/.ssh/authorized_keys`. Der Nutzer muss docker Rechte haben.
+- Dann erstellen wir eine neue Maschine und nutzen den neuen SSH Key
+- Wenn das Repository und die Organization public sind, kann das Repository ohne weitere Schritte geclont und Compute ausgeführt werden
+- Wenn das Repository und/oder die Organization aber privat ist, muss zunächst ein Nutzer, der Zugriff auf das zu klonende Repo in der Sandbox hat, ein Access Token erstellen. User Settings -> Applications -> Generate Token. Mit diesem Token kann das Repository geclont werden.
+- Als letzter Schritt muss dieser neue Nutzer Access Token als Gitea Token in der Organization -> Settings -> Gitea Token hinterlegt werden. Als Nutzer kann zum Beispiel: user und als Token kann das zuvor erstellte Token verwendet werden. Dieses Token wird benötigt, um das Repository zu clonen.
+- Wenn das Repository DVC verwendet, so müssen zusätzlich `Devpod Credentials` in der Organization -> Settings -> Devpod Credentials hinterlegt werden. Hierbei handelt es sich um die S3 Credentials, die für das DVC Repository benötigt werden. Format:
+
+-- Remote => aquaremote
+-- Key => access_key_id
+-- Value => <1password>
+
+-- Remote => aquaremote
+-- Key => secret_access_key
+-- Value => <1password>
 
 # Troubleshooting
 ```bash

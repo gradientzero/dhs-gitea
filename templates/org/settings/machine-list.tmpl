@@ -10,16 +10,14 @@
 						using a public key. For this connection to be successful, the platform's public key must
 						already be registered on the remote machine.
 						<br>
+						<br>
 						You can manage SSH keys in the "SSH Keys" section to ensure the correct key is in place.
 						A remote machine will reject any connection attempt if the platform's public key hasn't been
 						added to its authorized_keys file in advance.
-
-
-						Overview of all remote instances available. When executing on a remote machine,
-						a connection between the platform and the remote machine is established via SSH - using public-key.
-						For this, the platform's public key must be known to the remote machine.
-						You can manage the SSH keys in 'SSH Keys'.
-						A remote machine will reject a connection if platform's public key was not added to authorized_keys beforehand.
+						<br>
+						<br>
+						Its important to note that the SSH Key is used to establish the connection only. If you run
+						a private repository, you need to provide a Gitea Token in addition.
 					</div>
 
 					<div class="ui right">
