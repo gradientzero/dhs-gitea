@@ -131,9 +131,15 @@ func ComputeExecute(ctx *context.Context) {
 	privateKey := orgSshKey.PrivateKey
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
 
-	// only use ssh public git urls, not https!
-	// gitUrl := cloneLink.HTTPS
-	gitUrl := cloneLink.SSH
+	// TODO: add new organization SSH Key to authorized keys in gitea
+	// =>
+	// HTTP(s) is used to clone git repository, not public key
+	// If repository is private we MUST add a Gitea Token from
+	// a user with access to the repository
+	//
+	// Currentl
+	gitUrl := cloneLink.HTTPS
+	// gitUrl := cloneLink.SSH
 
 	gitUser := ctx.Doer.Name
 	gitEmail := ctx.Doer.Email
