@@ -4,7 +4,8 @@
 # load env file into this shell
 set -a; source .env.dockerhub; set +a
 
-ssh root@dhs.detabord.com /bin/bash << EOF
+#ssh root@usb.detabord.com /bin/bash << EOF
+ssh root@sandbox.gradient0.com /bin/bash << EOF
   # docker login
   docker login --username $DOCKER_HUB_USER --password-stdin <<< "$DOCKER_HUB_PERSONAL_ACCESS_TOKEN"
 
@@ -12,7 +13,7 @@ ssh root@dhs.detabord.com /bin/bash << EOF
   docker pull gradient0/dhs-gitea:latest
 
   # disable systemd service and stop
-  systemctl restart sentinel
+  systemctl restart sandbox
 
   # docker logout
   docker logout

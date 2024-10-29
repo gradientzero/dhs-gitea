@@ -77,6 +77,8 @@ func Execute(privateKey, user, host string, port int32,
 
 	// add branch to gitUrl
 	gitUrl = gitUrl + "@" + gitBranch
+
+	// devpod up test-workspace --source=git:ssh://git@sandbox.gradient0.com:2221/sandbox/dvc.git --provider sandbox-remote-ssh --ide none --id test-workspace
 	cmd = exec.Command("devpod", "up", workSpaceId, "--source=git:"+gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
 	err = getOutputCommand(cmd, sendStream)
 	if err != nil {

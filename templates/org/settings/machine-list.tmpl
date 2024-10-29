@@ -5,6 +5,16 @@
 					{{ctx.Locale.Tr "org.settings.machine_form"}}
 
 					<div class="sub header gt-mt-3" style="padding-right: 8rem">
+						This section provides an overview of all remote machines available for your organization.
+						When a task is executed on a remote machine, the platform establishes a secure SSH connection
+						using a public key. For this connection to be successful, the platform's public key must
+						already be registered on the remote machine.
+						<br>
+						You can manage SSH keys in the "SSH Keys" section to ensure the correct key is in place.
+						A remote machine will reject any connection attempt if the platform's public key hasn't been
+						added to its authorized_keys file in advance.
+
+
 						Overview of all remote instances available. When executing on a remote machine,
 						a connection between the platform and the remote machine is established via SSH - using public-key.
 						For this, the platform's public key must be known to the remote machine.

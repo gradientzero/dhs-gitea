@@ -5,6 +5,20 @@
 					{{ctx.Locale.Tr "org.settings.ssh_key_form"}}
 
 					<div class="sub header gt-mt-3" style="padding-right: 8rem;">
+						When initiating a "Remote Run," the platform connects to the designated remote machine via SSH.
+						For the remote machine to allow this connection, the platform's public SSH key needs to be added
+						to the remote machine's list of authorized keys. This setup authorizes the platform to access the
+						remote system securely.
+						<br>
+						Each organization may use a unique public key for this connection, allowing flexibility in SSH key
+						management. Since these keys do not need to be stored directly on the platform's system, they can be
+						freely generated and managed independently for each organization.
+						<br>
+						To set this up:
+						<li>Generate new passwordless SSH Key (for example using https://8gwifi.org/sshfunctions.jsp)</li>
+						<li>Ensure the platform's public key is added to the remote machine by copying it to /home/<user>/.ssh/authorized_keys.</li>
+						<li>This one-time setup enables the platform's secure access to the remote machine when required.</li>
+
 							Creates a public-key pair (ECC/RSA) within your organization.
 						This key pair enables your organization access to the target remote machine via SSH.
 						To accomplish this, insert the public key into <span class="gt-font-semibold">/&lt;user&gt;/.ssh/authorized_keys</span>

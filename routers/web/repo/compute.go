@@ -130,7 +130,10 @@ func ComputeExecute(ctx *context.Context) {
 
 	privateKey := orgSshKey.PrivateKey
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
-	gitUrl := cloneLink.HTTPS
+
+	// only use ssh public git urls, not https!
+	// gitUrl := cloneLink.HTTPS
+	gitUrl := cloneLink.SSH
 
 	gitUser := ctx.Doer.Name
 	gitEmail := ctx.Doer.Email
