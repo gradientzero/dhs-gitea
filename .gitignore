@@ -119,3 +119,8 @@ portainer.env
 docker-compose-dev.yml
 .env
 .env.dockerhub
+/__custom
+/__data
+/local-workpath
+/local-repos
+/devpod-runs

@@ -21,7 +21,8 @@
 				canCompute: {{ .CanCompute }},
 				machines:  [{{range .Machines}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
 				branch: '{{ .BranchName }}',
-				tag: '{{ .TagName }}'
+				tag: '{{ .TagName }}',
+				runs: [{{range .Runs}} JSON.parse({{JsonUtils.EncodeToString . }}),{{end}}],
 			}
 			window.config.computeData = data;
 		</script>

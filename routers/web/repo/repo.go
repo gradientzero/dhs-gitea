@@ -45,7 +45,7 @@ const (
 	tplCreate             base.TplName = "repo/create"
 	tplAlertDetails       base.TplName = "base/alert_details"
 	tplCreateWithTemplate base.TplName = "repo/create_with_template"
-	tplRepoPath                        = "templateRepo/aqua-demo"
+	tplRepoPath                        = "templateRepo/project"
 	generatedFromTemplate              = "generated from template"
 )
 

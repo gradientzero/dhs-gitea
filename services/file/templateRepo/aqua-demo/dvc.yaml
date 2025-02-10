@@ -1,5 +1,0 @@
-stages:
-  simple_run:
-    cmd: python main.py
-    deps:
-    - code/simple.py

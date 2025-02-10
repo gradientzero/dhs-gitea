@@ -1438,6 +1438,7 @@ func registerRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}/compute", func() {
 		m.Get("", repo.Computes)
 		m.Get("/execute", repo.ComputeExecute)
+		m.Delete("/delete-log", repo.DeleteLog)
 	}, ignSignIn, context.RepoAssignment, context.RepoRef(), canEnableEditor,
 		reqRepoProjectsReader, repo.MustEnableComputes) // TODO: check read permission
 

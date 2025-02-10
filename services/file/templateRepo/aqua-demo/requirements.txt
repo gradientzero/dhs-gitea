@@ -1,3 +1,0 @@
-dvc[all]==3.4.0
-dvclive
-pygit2==1.14.1

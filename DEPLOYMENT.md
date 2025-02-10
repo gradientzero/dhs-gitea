@@ -90,7 +90,7 @@ server {
 }
 ```
 
-Rstart nginx:
+Restart nginx:
 ```bash
 systemctl restart nginx
 ```
@@ -162,7 +162,7 @@ After following the instructions above, we now need to have a server with the fo
 - docker installed
 - new OS user 'git'
 - project related files uploaded to the server
-- systemd service portainer up and running
+- systemd service sandbox up and running
 
 
 # Set the new server
@@ -208,3 +208,5 @@ bash into running service:
 ```bash
 docker compose -p sandbox exec -it server bash
 ```
+
+

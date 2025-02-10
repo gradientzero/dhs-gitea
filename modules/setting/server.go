@@ -163,7 +163,7 @@ func MakeAbsoluteAssetURL(appURL, staticURLPrefix string) string {
 
 func loadServerFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("server")
-	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Detabord: Data & Compute Platform with built-in privacy")
+	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Sandbox")
 
 	Domain = sec.Key("DOMAIN").MustString("localhost")
 	HTTPAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")

@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+.exoscale
+.boto
+.s3cfg
+
+# contains volatile, temporary data
+.dvc/tmp
+
+# dvc pull must be used to sync data
+.dvc/cache
+
+# my custom data
+data/super-secret.txt

@@ -2,198 +2,327 @@ package devpod
 
 import (
 	"bufio"
-	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	org_model "code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/services/context"
+	"github.com/buildkite/terminal-to-html/v3"
 	"github.com/rs/xid"
 )
 
-// TODO: 1. need to forward S3 credentials
-// TODO: 2. need to find git credential handling for pushing back
-// not sure concurrent safety for devpod for now
-
-func Execute(privateKey, user, host string, port int32,
+func Execute(
+	ctx *context.Context,
+	isRepoPrivate bool,
+	privateKey, user, host string,
+	port int32,
 	gitUrl, gitBranch, gitUser, gitEmail, gitToken string,
-	config map[string][]org_model.OrgDevpodCredential,
-	sendStream func(string),
+	devPodCredentials map[string][]org_model.OrgDevpodCredential,
+	_sendStream func(string),
 ) error {
-	// gitUrl := "git@gitlab.com:grz1/aqua-research.git" // NOTE: make sure to trim, will get surprise if there is space
+
+	// create a folder to store runs
+	runID := time.Now().Format("20060102-150405")
+	repoPath := filepath.Join(RunsFolder, fmt.Sprintf("repo-%d", ctx.Repo.Repository.ID))
+	runFile := filepath.Join(repoPath, fmt.Sprintf("run-%s.log", runID))
+
+	var sendStream = func(result string) {
+		output := terminal.Render([]byte(result))
+		ctx.Write([]byte(string(output) + "\n"))
+		if err := LogRunMessageToFile(runFile, result); err != nil {
+			log.Error("Failed to write to run file: %v", err)
+		}
+		ctx.Resp.Flush()
+	}
+
+	// Create the file and write initial content
+	if err := CreateRunFile(runFile); err != nil {
+		log.Error("Failed to create run file: %v", err)
+	}
+
+	sendStream("#===================================")
+	sendStream("# Starting Run ...")
+	sendStream("#===================================")
 
 	providerId := xid.New().String()
 	workSpaceId := xid.New().String()
+	sendStream("ProviderId: " + providerId)
+	sendStream("WorkSpaceId: " + workSpaceId)
 
 	// git credential handling
 	// if gitToken is available then create git credential file and set it
 	if gitToken != "" {
 		log.Info("Creating git creds for devpod: %v", workSpaceId)
 		g := NewGitCredential(workSpaceId, gitUser, gitToken)
-		err := g.Set()
-		if err != nil {
+		if err := g.Set(); err != nil {
 			log.Error("Failing creating git creds file: %v", err)
+			sendStream(err.Error())
 		}
 		defer g.Remove()
 	}
+	sendStream("Using Git Credentials:")
+	sendStream("- Git User: " + gitUser)
+	sendStream("- Access Token: ***")
 
 	// setting up private key for use
 	privateKeyFile := "/tmp/" + providerId + ".key"
-	fmt.Println(privateKeyFile + " will created")
-
-	// TODO: make sure append new line end of key
-
 	// Important for line ending for correct
 	privateKey = strings.Replace(privateKey, "\r\n", "\n", -1)
+
 	// also make sure there is new line in end of file
-	err := os.WriteFile(privateKeyFile, []byte(privateKey+"\n"), 0o600)
-	if err != nil {
+	if err := os.WriteFile(privateKeyFile, []byte(privateKey+"\n"), 0o600); err != nil {
 		log.Error("Failing creating private key file: %v", err)
+		sendStream(err.Error())
 	}
+	sendStream("Copied Private SSH Key:" + privateKeyFile)
 
 	defer func() {
-		err := os.Remove(privateKeyFile)
-		if err != nil {
+		if err := os.Remove(privateKeyFile); err != nil {
 			log.Error("Failing to remove private key file: %v", err)
+			sendStream(err.Error())
 		}
 	}()
+	sendStream("")
 
-	// devpod provider add ssh --name <provider-id> -o HOST=vagrant@localhost -o PORT=2222 -o EXTRA_FLAGS="-i /tmp/private_key"
-	cmd := exec.Command("devpod", "provider", "add", "ssh", "--name", providerId,
-		"-o", "HOST="+user+"@"+host, "-o", "PORT="+strconv.Itoa(int(port)),
-		"-o", "EXTRA_FLAGS=-i "+privateKeyFile) // Don't use \" in EXTRA_FLAGS for some reason it not working
+	sendStream("#===================================")
+	sendStream("# Creating Provider ...")
+	sendStream("#===================================")
+
+	// HACKED:
+	var err error
+	var cmd *exec.Cmd
+	createSSHProvider := !strings.Contains(gitUrl, "localhost")
+
+	if createSSHProvider {
+		// create SSH provider (real provider):
+		// devpod provider add ssh --name providerId -o HOST=user@host -o PORT=port -o EXTRA_FLAGS=-i /tmp/providerId.key
+		cmd = exec.Command(
+			"devpod", "provider", "add", "ssh",
+			"--name", providerId,
+			"-o", "HOST="+user+"@"+host,
+			"-o", "PORT="+strconv.Itoa(int(port)),
+			"-o", "EXTRA_FLAGS=-i "+privateKeyFile,
+		)
+	} else {
+		// create internal docker provider:
+		// devpod provider add docker --name providerId
+		cmd = exec.Command("devpod", "provider", "add", "docker", "--name", providerId)
+	}
 	cmd.Env = os.Environ()
 	cmd.Dir = "/tmp"
-
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
+	sendStream("Output: ")
+	if err := getOutputCommand(cmd, sendStream); err != nil {
 		log.Error("Failing to add provider: %v", err)
+		sendStream(err.Error())
 	}
+	sendStream("")
 
+	sendStream("#===================================")
+	sendStream("# Creating Workspace ...")
+	sendStream("#===================================")
+	sendStream("Git Repo Private: " + fmt.Sprintf("%t", isRepoPrivate))
+	if isRepoPrivate {
+		// user:accesstoken@host:port schema for private repository
+		gitUrl = strings.Replace(gitUrl, "https://", "https://"+gitUser+":"+gitToken+"@", -1)
+		gitUrl = strings.Replace(gitUrl, "http://", "http://"+gitUser+":"+gitToken+"@", -1)
+	}
 	// add branch to gitUrl
 	gitUrl = gitUrl + "@" + gitBranch
 
+	sendStream("Git Repo Url: " + strings.Replace(gitUrl, gitToken, "***", -1))
+	sendStream("Git Repo Branch: " + gitBranch)
+
 	// devpod up test-workspace --source=git:ssh://git@sandbox.gradient0.com:2221/sandbox/dvc.git --provider sandbox-remote-ssh --ide none --id test-workspace
-	cmd = exec.Command("devpod", "up", workSpaceId, "--source=git:"+gitUrl, "--provider", providerId, "--ide", "none", "--id", workSpaceId)
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
+	cmd = exec.Command(
+		"devpod", "up", workSpaceId,
+		"--source=git:"+gitUrl,
+		"--provider", providerId,
+		"--ide", "none",
+		"--id", workSpaceId,
+		"--debug",
+	)
+	sendStream("Running Command: ")
+	sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
+	if err = getOutputCommand(cmd, sendStream); err != nil {
 		log.Error("Failing to up devpod: %v", err)
+		sendStream(err.Error())
 	}
 
-	for key, v := range config {
-		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo ['remote \""+key+"\"'] >> .dvc/config.local")
-		err := getOutputCommand(cmd, sendStream)
-		if err != nil {
-			log.Error("Failing to add remote: %v", err)
+	if len(devPodCredentials) > 0 {
+		sendStream("")
+		sendStream("#===================================")
+		sendStream("# DevPod Credentials ...")
+		sendStream("#===================================")
+		for remoteName, keyValPair := range devPodCredentials {
+			sendStream("Remote: " + remoteName)
+			for _, value := range keyValPair {
+				sendStream(" - " + value.Key + ": ***")
+			}
 		}
-		for _, value := range v {
-			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "echo "+value.Key+"="+value.Value+" >> .dvc/config.local")
-			err := getOutputCommand(cmd, sendStream)
-			if err != nil {
-				log.Error("Failing to add remote: %v", err)
+		fileContent := ""
+		for remoteName, keyValPair := range devPodCredentials {
+			fileContent += fmt.Sprintf("['remote \"%s\"']\n", remoteName)
+			for _, value := range keyValPair {
+				fileContent += fmt.Sprintf("    %s = %s\n", value.Key, value.Value)
+			}
+		}
+		if len(fileContent) > 0 {
+			// base64 encode the content of .dvc/config.local
+			// Reason: we cannot pass content with single and double quotes
+			// in command; additionally devpod disallows stdin which would also be an option
+			// echo "Test" | base64 -i - -o .dvc/config.local.b64
+			// devpod ssh ${WORKSPACE_ID} \
+			// 		--command "echo \"$(cat .dvc/config.local.b64)\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64"
+			// rm .dvc/config.local.b64
+			fileContentB64 := base64.StdEncoding.EncodeToString([]byte(fileContent))
+			_cmd := fmt.Sprintf("echo \"%s\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64 && sleep 1", fileContentB64)
+			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+			sendStream("Running Command: ")
+			sendStream("- " + strings.Replace(cmd.String(), fileContentB64, "<base64:***>", -1))
+			if err := getOutputCommand(cmd, sendStream); err != nil {
+				log.Error(err.Error())
+				sendStream(err.Error())
 			}
 		}
 	}
 
-	cmd = exec.Command("devpod", "ssh", workSpaceId,
-		"--command", "export DEVPOD_WORKSPACE_ID="+workSpaceId)
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
-		log.Error("Failing to add remote: %v", err)
+	sendStream("")
+	sendStream("#===================================")
+	sendStream("# Find & Execute run.sh ...")
+	sendStream("#===================================")
+	// devpod ssh <workspace-id> --command 'run.sh'
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "chmod +x run.sh && ./run.sh && sleep 1.0")
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
-	cmd = exec.Command("devpod", "ssh", workSpaceId,
-		"--command", "cat dvc-script.sh")
-	var b bytes.Buffer
-	cmd.Stderr = &b
-	if err := cmd.Start(); err != nil {
-		log.Fatal("%v", err)
+	sendStream("")
+	sendStream("#===================================")
+	sendStream("# Config Git ...")
+	sendStream("#===================================")
+	//devpod ssh ${WORKSPACE_ID} --command "echo '${SANDBOX_PROTOCOL}://${GIT_USER}:${GIT_ACCESS_TOKEN}@${SANDBOX_HOST_DST}' > ~/.git-credentials"
+
+	extractBaseURL := func(url string) string {
+		re := regexp.MustCompile(`^(https?://[^/]+)`)
+		match := re.FindStringSubmatch(url)
+		if len(match) > 1 {
+			return match[1]
+		}
+		return ""
+	}
+	srcBaseUrl := extractBaseURL(gitUrl)
+	dstBaseUrl := extractBaseURL(gitUrl)
+
+	// host of remote machine is localhost - usually used for development with docker
+	// => because DevPod runs within docker we have change from localhost to host.docker.internal
+	// => this is only needed for the git credentials when pushing results to origin (=host.docker.internal)
+	remoteMachineIsLocalhost := strings.Contains(srcBaseUrl, "localhost:")
+	if remoteMachineIsLocalhost {
+		dstBaseUrl = strings.Replace(srcBaseUrl, "localhost", "host.docker.internal", -1)
+	}
+	// devpod ssh <workspace-id> --command 'echo 'http://user:token@host:port' > ~/.git-credentials'
+	// devpod ssh <workspace-id> --command 'git config credential.helper store'
+	_cmd := fmt.Sprintf("echo \"%s\" > ~/.git-credentials && git config credential.helper store && sleep 1.0", dstBaseUrl)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	sendStream("Running Command: ")
+	sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
-	// dvc-script.sh content exist
-	if b.String() != "" {
-		// devpod ssh <workspace-id> --command '[ -f dvc-script.sh ] && chmod +x dvc-script.sh && ./dvc-script.sh'
-		cmd = exec.Command("devpod", "ssh", workSpaceId,
-			"--command", "[ -f dvc-script.sh ] && chmod +x dvc-script.sh && bash dvc-script.sh")
-		err = getOutputCommand(cmd, sendStream)
-		if err != nil {
-			log.Error("Failing to add remote: %v", err)
+	// if remote machine is localhost we need to change the git config url to host.docker.internal, too
+	if remoteMachineIsLocalhost {
+		// devpod ssh <workspace-id> --command "git config url."http://user:token@host.docker.internal:3001/".insteadOf "http://user:token@localhost:3001/""
+		_cmd = fmt.Sprintf("git config url.\"%s\".insteadOf \"%s\" && sleep 1.0", dstBaseUrl, srcBaseUrl)
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+		sendStream("Running Command: ")
+		sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
+		if err = getOutputCommand(cmd, sendStream); err != nil {
+			log.Error(err.Error())
+			sendStream(err.Error())
 		}
-	} else {
-
-		// devpod ssh <workspace-id> --command 'dvc pull'
-		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc pull")
-		err = getOutputCommand(cmd, sendStream)
-		if err != nil {
-			log.Error("Failing to add remote: %v", err)
-		}
-
-		// devpod ssh <workspace-id> --command 'dvc exp run'
-		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "dvc exp run")
-		err = getOutputCommand(cmd, sendStream)
-		if err != nil {
-			log.Error("Failing to add remote: %v", err)
-		}
-
-	}
-
-	// devpod ssh <workspace-id> --command 'git add .'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git add .")
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
-		log.Error("Failing to add remote: %v", err)
 	}
 
 	// devpod ssh <workspace-id> --command 'git config user.name xxx'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.name "+gitUser)
-	if err := cmd.Run(); err != nil {
-		log.Error("Failing to add remote: %v", err)
-	}
-
 	// devpod ssh <workspace-id> --command 'git config user.email xxx'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git config user.email "+gitEmail)
+	_cmd = fmt.Sprintf("git config user.name \"%s\" && git config user.email \"%s\" && sleep 1.0", gitUser, gitEmail)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
 	if err = getOutputCommand(cmd, sendStream); err != nil {
-		log.Error("Failing to add remote: %v", err)
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
+	sendStream("")
+	sendStream("#===================================")
+	sendStream("# Pushing Results ...")
+	sendStream("#===================================")
+	// devpod ssh <workspace-id> --command 'git add .'
 	// devpod ssh <workspace-id> --command 'git commit -m "exp run result"'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git commit -m 'exp run result'")
-	if err = getOutputCommand(cmd, sendStream); err != nil {
-		log.Error("Failing to add remote: %v", err)
-	}
-
 	// devpod ssh <workspace-id> --command 'git push origin'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "git push origin")
+
+	commitMsg := "exp run result"
+	_cmd = fmt.Sprintf("git add . && git commit -m \"%s\" && git push origin && sleep 1.0", commitMsg)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
 	if err = getOutputCommand(cmd, sendStream); err != nil {
-		log.Error("Failing to add remote: %v", err)
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
+	skipCleanup := false
+	if skipCleanup {
+		return nil
+	}
+	sendStream("")
+	sendStream("#===================================")
+	sendStream("# Cleanup ...")
+	sendStream("#===================================")
 	// devpod stop <workspace-id>
 	cmd = exec.Command("devpod", "stop", workSpaceId)
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
-		log.Error("Failing to add remote: %v", err)
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
 	// devpod delete <workspace-id>
 	cmd = exec.Command("devpod", "delete", workSpaceId)
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
-		log.Error("Failing to add remote: %v", err)
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
 	// devpod provider delete <provider-id>
 	cmd = exec.Command("devpod", "provider", "delete", providerId)
-	err = getOutputCommand(cmd, sendStream)
-	if err != nil {
-		log.Error("Failing to add provider: %v", err)
+	sendStream("Running Command: ")
+	sendStream("- " + cmd.String())
+	if err = getOutputCommand(cmd, sendStream); err != nil {
+		log.Error(err.Error())
+		sendStream(err.Error())
 	}
 
+	sendStream("Compute done.")
 	return err
 }
 

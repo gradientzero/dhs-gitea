@@ -14,9 +14,9 @@ services:
     networks:
       - dhs-gitea
     volumes:
-      #- gitea-data:/var/lib/gitea
-      - /home/git/sandbox/data:/data
-      - /home/git/.ssh:/data/git/.ssh
+      - gitea-data:/var/lib/gitea
+      - ./data:/data
+      - ./data/.ssh:/data/git/.ssh
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:

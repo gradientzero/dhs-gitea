@@ -1,0 +1,20 @@
+stages:
+  simple_run:
+    cmd: python main.py
+    deps:
+    - code/simple.py
+    always_changed: true
+params:
+- dvclive/params.yaml
+metrics:
+- dvclive/metrics.json
+plots:
+- dvclive/plots/metrics:
+    x: step
+- dvclive/plots/custom/iris_feature_importance.json:
+    template: bar_horizontal
+    x: importance
+    y: name
+    title: 'Iris Dataset: Feature Importance'
+    x_label: Feature Importance
+    y_label: Feature Name

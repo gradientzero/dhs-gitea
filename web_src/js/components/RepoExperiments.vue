@@ -25,7 +25,7 @@ export default {
 </script>
 <template>
   <div>
-    <div class="ui segment gt-h-screen" v-if="loading">
+    <div class="ui segment gt-h-screen" v-if="false && loading">
       <div class="ui active dimmer">
         <div class="ui big text loader">Loading...</div>
       </div>

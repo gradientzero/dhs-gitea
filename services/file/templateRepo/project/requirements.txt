@@ -1,0 +1,6 @@
+#dvc[all]==3.4.0
+dvc==3.59.0
+dvc-s3==3.2.0
+#dvclive
+dvclive==3.48.1
+#pygit2==1.14.1

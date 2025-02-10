@@ -1,4 +1,7 @@
-FROM python:3.11
+FROM python:3.13
+
+## OS dependencies: dvc exp show reuires 'less'
+RUN apt update && apt install -y less
 
 # Add non-root user
 ARG USERNAME=nonroot
@@ -24,7 +27,7 @@ RUN pip install -r /tmp/requirements-dev.txt && \
     rm /tmp/requirements-dev.txt
 
 # fix: https://github.com/iterative/dvc/issues/10431
-RUN pip install pygit2==1.14.1
+#RUN pip install pygit2==1.14.1
 
 # copy all over
 # COPY . .

@@ -1,7 +1,9 @@
 package repo
 
 import (
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	org_model "code.gitea.io/gitea/models/organization"
@@ -86,12 +88,24 @@ func Computes(ctx *context.Context) {
 	ctx.Data["CanCompute"] = true
 	ctx.Data["Machines"] = machines
 
+	// collect all runs from logs
+	repoPath := filepath.Join(devpod.RunsFolder, fmt.Sprintf("repo-%d", ctx.Repo.Repository.ID))
+	if logFiles, err := devpod.ReadLogFiles(repoPath); err != nil {
+		log.Error("Failed to read log files: %v", err)
+	} else {
+		ctx.Data["Runs"] = logFiles
+	}
+
 	ctx.HTML(http.StatusOK, tplCompute)
 }
 
 func ComputeExecute(ctx *context.Context) {
-
-	// TODO: validate repo and org owner
+	// send stream function
+	var sendStream = func(result string) {
+		output := terminal.Render([]byte(result))
+		ctx.Write([]byte(string(output) + "\n"))
+		ctx.Resp.Flush()
+	}
 
 	machineId := ctx.Req.URL.Query().Get("machineId")
 	parseId, err := strconv.ParseInt(machineId, 10, 64)
@@ -111,8 +125,6 @@ func ComputeExecute(ctx *context.Context) {
 		return
 	}
 
-	// TODO: validate machine id
-
 	// Repo must be organization owned
 	orgMachine, err := org_model.GetMachineById(parseId, ctx.Repo.Owner.ID)
 	if err != nil {
@@ -131,21 +143,24 @@ func ComputeExecute(ctx *context.Context) {
 	privateKey := orgSshKey.PrivateKey
 	cloneLink := ctx.Data["RepoCloneLink"].(*repo.CloneLink)
 
-	// TODO: add new organization SSH Key to authorized keys in gitea
-	// =>
-	// HTTP(s) is used to clone git repository, not public key
+	// HTTP(s) is used to clone git repository, not SSH (public key)
 	// If repository is private we MUST add a Gitea Token from
 	// a user with access to the repository
-	//
-	// Currentl
-	gitUrl := cloneLink.HTTPS
-	// gitUrl := cloneLink.SSH
+	gitUrl := cloneLink.HTTPS // gitUrl := cloneLink.SSH
 
-	gitUser := ctx.Doer.Name
-	gitEmail := ctx.Doer.Email
+	// Machine
 	tokens, err := org_model.GetOrgGiteaToken(ctx.Repo.Owner.ID)
 	if err != nil {
 		log.Error("%v", err)
+	}
+
+	// If repo is private user access token (gitea token) is required
+	isRepoPrivate := ctx.Repo.Repository.IsPrivate
+	if isRepoPrivate && len(tokens) == 0 {
+		err := fmt.Errorf("Private repo requires a Gitea Token")
+		log.Error(err.Error())
+		sendStream(err.Error())
+		return
 	}
 
 	var gitToken string
@@ -158,14 +173,13 @@ func ComputeExecute(ctx *context.Context) {
 		log.Error("%v", err)
 	}
 
-	var config = make(map[string][]org_model.OrgDevpodCredential)
-
+	var devPodCredentials = make(map[string][]org_model.OrgDevpodCredential)
 	for _, credential := range credentials {
-		if v, ok := config[credential.Remote]; ok {
-			config[credential.Remote] = append(v, credential)
+		if v, ok := devPodCredentials[credential.Remote]; ok {
+			devPodCredentials[credential.Remote] = append(v, credential)
 		} else {
 			var lst = []org_model.OrgDevpodCredential{credential}
-			config[credential.Remote] = lst
+			devPodCredentials[credential.Remote] = lst
 		}
 	}
 
@@ -179,20 +193,26 @@ func ComputeExecute(ctx *context.Context) {
 	// send header
 	ctx.Resp.Flush()
 
-	// send stream function
-	var sendStream = func(result string) {
-		output := terminal.Render([]byte(result))
-		ctx.Write([]byte(string(output) + "\n"))
-		ctx.Resp.Flush()
-	}
+	gitUser := ctx.Doer.Name
+	gitEmail := ctx.Doer.Email
 
-	err = devpod.Execute(privateKey, user, host, port, gitUrl, gitBranch, gitUser, gitEmail, gitToken, config, sendStream)
+	// execute devpod
+	err = devpod.Execute(ctx,
+		isRepoPrivate, privateKey,
+		user, host, port, gitUrl,
+		gitBranch, gitUser, gitEmail,
+		gitToken, devPodCredentials, sendStream,
+	)
 	if err != nil {
 		log.Error("%v", err)
 	}
+}
 
-	log.Info("Compute Done ..")
-	ctx.Write([]byte("\nCompute Done..\n"))
-	ctx.Resp.Flush()
-
+func DeleteLog(ctx *context.Context) {
+	filename := ctx.Req.URL.Query().Get("filename")
+	repoPath := filepath.Join(devpod.RunsFolder, fmt.Sprintf("repo-%d", ctx.Repo.Repository.ID))
+	runFile := filepath.Join(repoPath, filename)
+	if err := devpod.DeleteRunFile(runFile); err != nil {
+		log.Error("%v", err)
+	}
 }

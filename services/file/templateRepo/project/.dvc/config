@@ -1,0 +1,5 @@
+[core]
+    remote = sandbox
+['remote "sandbox"']
+    url = s3://sandbox-bucket
+    endpointurl = https://sos-at-vie-1.exo.io

@@ -14,7 +14,7 @@ import (
 func ExperimentHtml(ctx *context.Context) (html template.HTML, err error) {
 
 	err = executeTempRepo(ctx, func(tempRepoPath string, repository *git.Repository) error {
-		cmd := exec.Command("dvc", "exp", "show", "--md")
+		cmd := exec.Command("dvc", "exp", "show", "--md", "--all-commits")
 		cmd.Dir = tempRepoPath
 		out, err := cmd.Output() // dont' combine output
 

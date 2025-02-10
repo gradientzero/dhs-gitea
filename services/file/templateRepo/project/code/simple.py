@@ -1,5 +1,5 @@
 from dvclive import Live
-
+import random
 
 def run_simple_experiment():
 
@@ -11,9 +11,9 @@ def run_simple_experiment():
     ]
 
     with Live() as live:
-        live.log_param("myParam", 123)
-        live.log_metric("myMetric", 543)
-        live.log_metric("new_metric", 333)
+        live.log_param("myParam", random.randint(0, 500))
+        live.log_metric("myMetric", random.randint(0, 500))
+        live.log_metric("new_metric", random.randint(0, 500))
 
         live.log_plot(
             "iris_feature_importance",

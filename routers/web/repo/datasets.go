@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"net/http"
 
@@ -39,11 +38,6 @@ func MustEnableDatasets(ctx *context.Context) {
 	}*/
 }
 
-func getDatasetCacheKey(commitID string, types string) string {
-	hashBytes := sha256.Sum256([]byte(fmt.Sprintf("%s	", commitID)))
-	return fmt.Sprintf("dvc_datasets_%s:%x", types, hashBytes)
-}
-
 // Datasets show list of dataset in projects
 func Datasets(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.dataset")
@@ -63,39 +57,36 @@ func Datasets(ctx *context.Context) {
 		ctx.Repo.IsViewTag = true
 	}
 
-	remotes := []api.Remote{}
-	files := []api.File{}
-	var err error
-	var cached bool
-	cc := cache.GetCache()
-	cached, _ = cc.GetJSON(getDatasetCacheKey(ctx.Repo.CommitID, "remotes"), &remotes)
-
-	if !cached {
-		remotes, err = dvc.RemoteList(ctx)
-		if err != nil {
-			log.Error("err when remote list: %v", err)
-			errorMsg := fmt.Sprintf("error occured when remote list: %v", err)
-			ctx.Flash.Error(errorMsg, true)
-		}
-
-		_ = cc.PutJSON(getDatasetCacheKey(ctx.Repo.CommitID, "remotes"), remotes, datasetCacheTimeout)
-	}
-
 	// Set branch active or selected branch
 	ctx.Data["BranchName"] = ctx.Repo.BranchName
 	ctx.Data["TagName"] = ctx.Repo.TagName
 	ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
+
+	cc := cache.GetCache()
+
+	remotes := []api.Remote{}
+	dvcRemotesCacheKey := fmt.Sprintf("dvc_datasets_%s_%s", "remotes", ctx.Repo.CommitID)
+	if cached, _ := cc.GetJSON(dvcRemotesCacheKey, &remotes); !cached {
+		var err error
+		remotes, err = dvc.RemoteList(ctx)
+		if err != nil {
+			log.Error(err.Error())
+			ctx.Flash.Error(err.Error(), true)
+		}
+		cc.PutJSON(dvcRemotesCacheKey, remotes, datasetCacheTimeout)
+	}
 	ctx.Data["RemoteList"] = remotes
 
-	cached, _ = cc.GetJSON(getDatasetCacheKey(ctx.Repo.CommitID, "files"), &files)
-
-	if !cached {
+	files := []api.File{}
+	dvcFilesCacheKey := fmt.Sprintf("dvc_datasets_%s_%s", "files", ctx.Repo.CommitID)
+	if cached, _ := cc.GetJSON(dvcFilesCacheKey, &files); !cached {
+		var err error
 		files, err = dvc.FileList(ctx)
 		if err != nil {
-			log.Error("err when remote file list: %v", err)
+			log.Error(err.Error())
+			ctx.Flash.Error(err.Error(), true)
 		}
-
-		_ = cc.PutJSON(getDatasetCacheKey(ctx.Repo.CommitID, "files"), files, datasetCacheTimeout)
+		cc.PutJSON(dvcFilesCacheKey, files, datasetCacheTimeout)
 	}
 
 	ctx.Data["Files"] = files
