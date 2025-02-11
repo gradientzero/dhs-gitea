@@ -25,7 +25,6 @@ Environment variables:
 [service]
 # disable user registration
 DISABLE_REGISTRATION = true
-
 # disallow users to create new organizations
 DISABLE_ORGANIZATION_CREATION = true
 
@@ -33,6 +32,12 @@ DISABLE_ORGANIZATION_CREATION = true
 [ui]
 THEMES = gitea-dark
 DEFAULT_THEME = gitea-dark
+
+# remove footer content
+[other]
+SHOW_FOOTER_VERSION = false
+SHOW_FOOTER_TEMPLATE_LOAD_TIME = false
+SHOW_FOOTER_POWERED_BY = false
 ```
 
 ## Custom Remote Machine with Docker

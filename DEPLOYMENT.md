@@ -8,7 +8,14 @@ On MacOS Docker Desktop ensure "Allow privileged port mapping" is checked in the
 ## dhs-gitea
 For build image latest and with specified version:
 ```bash
-docker build -t gradient0/dhs-gitea:latest -t gradient0/dhs-gitea:<$version> .
+# sandbox.gradient0.com is x86_64
+docker build \
+    --platform linux/amd64 \
+    --build-arg GITEA_VERSION=main \
+    -t gradient0/dhs-gitea:1.1.0 \
+    -t gradient0/dhs-gitea:latest \
+    .
+# for testing on Mac (or other platform) remove --platform linux/amd64
 ```
 
 To push image to registry docker hub, you need to log in to Docker Hub first and then push, with the following command:

@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22 AS build-env
+FROM golang:1.22-bullseye AS build-env
 
 ARG GOPROXY
 ENV GOPROXY=${GOPROXY:-direct}
@@ -9,79 +9,85 @@ ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS="bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y build-essential git nodejs npm
+# Build deps
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    nodejs \
+    patchelf \
+    && rm -rf /var/lib/apt/lists/*
 
-# Setup repository
+# Setup repo
 COPY . ${GOPATH}/src/code.gitea.io/gitea
 WORKDIR ${GOPATH}/src/code.gitea.io/gitea
 
 # Checkout version if set
 RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
- && make clean-all build
+ && make clean-all build -j1
 
 # Begin env-to-ini build
 RUN go build contrib/environment-to-ini/environment-to-ini.go
 
+# Copy local files
+COPY docker/root /tmp/local
+
+# Set permissions
+RUN chmod 755 /tmp/local/usr/bin/entrypoint \
+              /tmp/local/usr/local/bin/gitea \
+              /tmp/local/etc/s6/gitea/* \
+              /tmp/local/etc/s6/openssh/* \
+              /tmp/local/etc/s6/.s6-svscan/* \
+              /go/src/code.gitea.io/gitea/gitea \
+              /go/src/code.gitea.io/gitea/environment-to-ini
+RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
+
+
 # Final stage
-FROM debian:bookworm
+FROM ubuntu:focal
 LABEL maintainer="maintainers@gitea.io"
-ENV DEBIAN_FRONTEND=noninteractive
 
 EXPOSE 22 3000
 
-# Install necessary packages
-RUN apt-get update -y && \
-    apt-get install -y \
-    wget \
-    gpg \
-    dumb-init \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
     curl \
-    gettext \
+    gettext-base \
     git \
-    libpam0g-dev \
+    libpam0g \
     openssh-server \
-    s6 \
     sqlite3 \
-    sudo \
     gnupg \
+    sudo \
+    dumb-init \
+    build-essential \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    cmake \
+    autoconf \
+    automake \
+    libtool \
     python3 \
+    python3-dev \
     python3-setuptools \
-    python3-pip
+    python3-pip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install devpod
-RUN curl -L -o devpod "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64" && install -c -m 0755 devpod /usr/local/bin && rm -f devpod
+RUN curl -L -o devpod "https://github.com/loft-sh/devpod/releases/download/v0.6.11/devpod-linux-amd64" && \
+    install -c -m 0755 devpod /usr/local/bin && rm -f devpod
 
 # Install dvc and gto
-RUN pip3 install --break-system-packages dvc[all] gto
+RUN pip3 install --no-cache-dir "meson-python==0.16.0" "scikit-build-core==0.8.0" && \
+    pip3 install --no-cache-dir "pyarrow>=19.0.0" --prefer-binary && \
+    pip3 install --no-cache-dir "dvc[all]==3.59.0" "gto"
 
-# Install su-exec
-RUN  set -ex; \
-     \
-     curl -o /usr/local/bin/su-exec.c https://raw.githubusercontent.com/ncopa/su-exec/master/su-exec.c; \
-     \
-     fetch_deps='gcc libc-dev'; \
-     apt-get update; \
-     apt-get install -y --no-install-recommends $fetch_deps; \
-     rm -rf /var/lib/apt/lists/*; \
-     gcc -Wall \
-         /usr/local/bin/su-exec.c -o/usr/local/bin/su-exec; \
-     chown root:root /usr/local/bin/su-exec; \
-     chmod 0755 /usr/local/bin/su-exec; \
-     rm /usr/local/bin/su-exec.c; \
-     \
-     apt-get purge -y --auto-remove $fetch_deps
-
-# Create git user
-RUN addgroup --gid 1000 git && \
-    adduser --system --uid 1000 --ingroup git --home /data/git --shell /bin/bash git && \
-    echo "git:*" | chpasswd
-
-# Setup ssh
-RUN mkdir -p /var/run/sshd
+# Create user and group
+RUN groupadd --gid 1000 git && \
+    useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash git
 
 ENV USER=git
 ENV GITEA_CUSTOM=/data/gitea
@@ -89,12 +95,9 @@ ENV GITEA_CUSTOM=/data/gitea
 VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/bin/entrypoint"]
-CMD ["/bin/s6-svscan", "/etc/s6"]
+CMD ["/usr/bin/s6-svscan", "/etc/s6"]
 
-COPY docker/root /
+COPY --from=build-env /tmp/local /
 COPY --from=build-env /go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
 COPY --from=build-env /go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
 COPY --from=build-env /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete /etc/profile.d/gitea_bash_autocomplete.sh
-RUN chmod 755 /usr/bin/entrypoint /app/gitea/gitea /usr/local/bin/gitea /usr/local/bin/environment-to-ini
-RUN chmod 755 /etc/s6/gitea/* /etc/s6/openssh/* /etc/s6/.s6-svscan/*
-RUN chmod 644 /etc/profile.d/gitea_bash_autocomplete.sh
