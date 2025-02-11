@@ -71,11 +71,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
     automake \
     libtool \
+    s6 \
     python3 \
     python3-dev \
     python3-setuptools \
     python3-pip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install su-exec
+RUN  set -ex; \
+    \
+    curl -o /usr/local/bin/su-exec.c https://raw.githubusercontent.com/ncopa/su-exec/master/su-exec.c; \
+    \
+    fetch_deps='gcc libc-dev'; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends $fetch_deps; \
+    rm -rf /var/lib/apt/lists/*; \
+    gcc -Wall \
+        /usr/local/bin/su-exec.c -o/usr/local/bin/su-exec; \
+    chown root:root /usr/local/bin/su-exec; \
+    chmod 0755 /usr/local/bin/su-exec; \
+    rm /usr/local/bin/su-exec.c; \
+    \
+    apt-get purge -y --auto-remove $fetch_deps
 
 # Install devpod
 RUN curl -L -o devpod "https://github.com/loft-sh/devpod/releases/download/v0.6.11/devpod-linux-amd64" && \
@@ -87,6 +105,9 @@ RUN pip3 install dvc[all]==3.59.0 gto
 # Create user and group
 RUN groupadd --gid 1000 git && \
     useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash git
+
+# Create the /run/sshd directory and set permissions
+RUN mkdir -p /run/sshd && chmod 0755 /run/sshd
 
 ENV USER=git
 ENV GITEA_CUSTOM=/data/gitea
