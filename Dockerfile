@@ -44,7 +44,7 @@ RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomple
 
 
 # Final stage
-FROM ubuntu:focal
+FROM ubuntu:jammy
 LABEL maintainer="maintainers@gitea.io"
 
 EXPOSE 22 3000
