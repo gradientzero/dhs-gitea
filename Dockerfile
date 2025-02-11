@@ -104,7 +104,8 @@ RUN pip3 install dvc[all]==3.59.0 gto
 
 # Create user and group
 RUN groupadd --gid 1000 git && \
-    useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash git
+    useradd --uid 1000 --gid 1000 --home /data/git --create-home --shell /bin/bash git && \
+    echo "git:*" | chpasswd
 
 # Create the /run/sshd directory and set permissions
 RUN mkdir -p /run/sshd && chmod 0755 /run/sshd
