@@ -49,6 +49,7 @@ LABEL maintainer="maintainers@gitea.io"
 
 EXPOSE 22 3000
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
