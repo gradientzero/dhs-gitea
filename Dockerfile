@@ -82,9 +82,7 @@ RUN curl -L -o devpod "https://github.com/loft-sh/devpod/releases/download/v0.6.
     install -c -m 0755 devpod /usr/local/bin && rm -f devpod
 
 # Install dvc and gto
-RUN pip3 install --no-cache-dir "meson-python==0.16.0" "scikit-build-core==0.8.0" && \
-    pip3 install --no-cache-dir "pyarrow>=19.0.0" --prefer-binary && \
-    pip3 install --no-cache-dir "dvc[all]==3.59.0" "gto"
+RUN pip3 install --no-cache-dir "dvc[all]==3.59.0" "gto"
 
 # Create user and group
 RUN groupadd --gid 1000 git && \
