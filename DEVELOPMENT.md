@@ -15,7 +15,7 @@ TAGS="bindata sqlite sqlite_unlock_notify" make build
 ```
 
 ```bash
-# open http://localhost:3000/ in your browser
+# open http://localhost:3001/ in your browser
 ```
 
 Environment variables:

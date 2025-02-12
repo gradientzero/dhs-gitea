@@ -36,6 +36,9 @@ func Execute(
 	runFile := filepath.Join(repoPath, fmt.Sprintf("run-%s.log", runID))
 
 	var sendStream = func(result string) {
+		if len(gitToken) > 0 {
+			result = strings.ReplaceAll(result, gitToken, "***")
+		}
 		output := terminal.Render([]byte(result))
 		ctx.Write([]byte(string(output) + "\n"))
 		if err := LogRunMessageToFile(runFile, result); err != nil {
@@ -97,7 +100,6 @@ func Execute(
 	sendStream("# Creating Provider ...")
 	sendStream("#===================================")
 
-	// HACKED:
 	var err error
 	var cmd *exec.Cmd
 	createSSHProvider := !strings.Contains(gitUrl, "localhost")
@@ -122,7 +124,7 @@ func Execute(
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
 	sendStream("Output: ")
-	if err := getOutputCommand(cmd, sendStream); err != nil {
+	if err := readCmdOutput(cmd, sendStream); err != nil {
 		log.Error("Failing to add provider: %v", err)
 		sendStream(err.Error())
 	}
@@ -140,7 +142,7 @@ func Execute(
 	// add branch to gitUrl
 	gitUrl = gitUrl + "@" + gitBranch
 
-	sendStream("Git Repo Url: " + strings.Replace(gitUrl, gitToken, "***", -1))
+	sendStream("Git Repo Url: " + gitUrl)
 	sendStream("Git Repo Branch: " + gitBranch)
 
 	// devpod up test-workspace --source=git:ssh://git@sandbox.gradient0.com:2221/sandbox/dvc.git --provider sandbox-remote-ssh --ide none --id test-workspace
@@ -153,8 +155,8 @@ func Execute(
 		"--debug",
 	)
 	sendStream("Running Command: ")
-	sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	sendStream("- " + cmd.String())
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error("Failing to up devpod: %v", err)
 		sendStream(err.Error())
 	}
@@ -186,11 +188,11 @@ func Execute(
 			// 		--command "echo \"$(cat .dvc/config.local.b64)\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64"
 			// rm .dvc/config.local.b64
 			fileContentB64 := base64.StdEncoding.EncodeToString([]byte(fileContent))
-			_cmd := fmt.Sprintf("echo \"%s\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64 && sleep 1", fileContentB64)
+			_cmd := fmt.Sprintf("echo \"%s\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64", fileContentB64)
 			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
 			sendStream("Running Command: ")
 			sendStream("- " + strings.Replace(cmd.String(), fileContentB64, "<base64:***>", -1))
-			if err := getOutputCommand(cmd, sendStream); err != nil {
+			if err := readCmdOutput(cmd, sendStream); err != nil {
 				log.Error(err.Error())
 				sendStream(err.Error())
 			}
@@ -202,10 +204,10 @@ func Execute(
 	sendStream("# Find & Execute run.sh ...")
 	sendStream("#===================================")
 	// devpod ssh <workspace-id> --command 'run.sh'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "chmod +x run.sh && ./run.sh && sleep 1.0")
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "chmod +x run.sh && ./run.sh")
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -236,11 +238,11 @@ func Execute(
 	}
 	// devpod ssh <workspace-id> --command 'echo 'http://user:token@host:port' > ~/.git-credentials'
 	// devpod ssh <workspace-id> --command 'git config credential.helper store'
-	_cmd := fmt.Sprintf("echo \"%s\" > ~/.git-credentials && git config credential.helper store && sleep 1.0", dstBaseUrl)
+	_cmd := fmt.Sprintf("echo \"%s\" > ~/.git-credentials && git config credential.helper store", dstBaseUrl)
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
 	sendStream("Running Command: ")
-	sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	sendStream("- " + cmd.String())
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -248,11 +250,11 @@ func Execute(
 	// if remote machine is localhost we need to change the git config url to host.docker.internal, too
 	if remoteMachineIsLocalhost {
 		// devpod ssh <workspace-id> --command "git config url."http://user:token@host.docker.internal:3001/".insteadOf "http://user:token@localhost:3001/""
-		_cmd = fmt.Sprintf("git config url.\"%s\".insteadOf \"%s\" && sleep 1.0", dstBaseUrl, srcBaseUrl)
+		_cmd = fmt.Sprintf("git config url.\"%s\".insteadOf \"%s\"", dstBaseUrl, srcBaseUrl)
 		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
 		sendStream("Running Command: ")
-		sendStream("- " + strings.Replace(cmd.String(), gitToken, "***", -1))
-		if err = getOutputCommand(cmd, sendStream); err != nil {
+		sendStream("- " + cmd.String())
+		if err = readCmdOutput(cmd, sendStream); err != nil {
 			log.Error(err.Error())
 			sendStream(err.Error())
 		}
@@ -260,11 +262,11 @@ func Execute(
 
 	// devpod ssh <workspace-id> --command 'git config user.name xxx'
 	// devpod ssh <workspace-id> --command 'git config user.email xxx'
-	_cmd = fmt.Sprintf("git config user.name \"%s\" && git config user.email \"%s\" && sleep 1.0", gitUser, gitEmail)
+	_cmd = fmt.Sprintf("git config user.name \"%s\" && git config user.email \"%s\"", gitUser, gitEmail)
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -278,11 +280,11 @@ func Execute(
 	// devpod ssh <workspace-id> --command 'git push origin'
 
 	commitMsg := "exp run result"
-	_cmd = fmt.Sprintf("git add . && git commit -m \"%s\" && git push origin && sleep 1.0", commitMsg)
+	_cmd = fmt.Sprintf("git add . && git commit -m \"%s\" && git push origin", commitMsg)
 	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -299,7 +301,7 @@ func Execute(
 	cmd = exec.Command("devpod", "stop", workSpaceId)
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -308,7 +310,7 @@ func Execute(
 	cmd = exec.Command("devpod", "delete", workSpaceId)
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -317,7 +319,7 @@ func Execute(
 	cmd = exec.Command("devpod", "provider", "delete", providerId)
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
-	if err = getOutputCommand(cmd, sendStream); err != nil {
+	if err = readCmdOutput(cmd, sendStream); err != nil {
 		log.Error(err.Error())
 		sendStream(err.Error())
 	}
@@ -326,12 +328,62 @@ func Execute(
 	return err
 }
 
+func readCmdOutput(cmd *exec.Cmd, sendStream func(string)) error {
+	// Create pipes for stdout and stderr
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("error creating StdoutPipe: %w", err)
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("error creating StderrPipe: %w", err)
+	}
+
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("error starting command: %w", err)
+	}
+
+	// Use goroutines to read stdout and stderr concurrently
+	outputChan := make(chan string)
+	go streamOutput(stdoutPipe, outputChan)
+	go streamOutput(stderrPipe, outputChan)
+
+	// Read from the channel and send output to the stream function
+	go func() {
+		for output := range outputChan {
+			sendStream(output)
+		}
+	}()
+
+	// Wait for the command to finish
+	if err := cmd.Wait(); err != nil {
+		close(outputChan)
+		return fmt.Errorf("command execution failed: %w", err)
+	}
+
+	close(outputChan)
+	return nil
+}
+
+func streamOutput(pipe io.ReadCloser, outputChan chan<- string) {
+	scanner := bufio.NewScanner(pipe)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		outputChan <- scanner.Text()
+	}
+	if err := scanner.Err(); err != nil {
+		outputChan <- fmt.Sprintf("Error reading output: %v", err)
+	}
+}
+
 // getOutputCommand is a helper function to get the stdout and stderr of a command and send it to the client
 func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	// Create a pipe for reading the command's output
 	outReader, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Error("Error creating StdoutPipe for Cmd: %v", err)
+		sendStream(fmt.Sprintf("Error creating StdoutPipe for Cmd: %v", err))
 		return err
 	}
 
@@ -339,6 +391,7 @@ func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	errReader, err := cmd.StderrPipe()
 	if err != nil {
 		log.Error("Error creating StderrPipe for Cmd: %v", err)
+		sendStream(fmt.Sprintf("Error creating StderrPipe for Cmd: %v", err))
 		return err
 	}
 
@@ -346,6 +399,7 @@ func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	err = cmd.Start()
 	if err != nil {
 		log.Error("Error starting Cmd: %v", err)
+		sendStream(fmt.Sprintf("Error starting Cmd: %v", err))
 		return err
 	}
 
@@ -365,6 +419,7 @@ func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	// get any errors encountered during scanning
 	if err := scanner.Err(); err != nil {
 		log.Error("Error with scanner: %v", err)
+		sendStream(fmt.Sprintf("Error scanner: %v", err))
 		return err
 	}
 
@@ -372,6 +427,7 @@ func getOutputCommand(cmd *exec.Cmd, sendStream func(string)) error {
 	err = cmd.Wait()
 	if err != nil {
 		log.Error("Error waiting for Cmd: %v", err)
+		sendStream(fmt.Sprintf("Error waiting for Cmd: %v", err))
 		return err
 	}
 
