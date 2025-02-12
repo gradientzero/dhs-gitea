@@ -189,7 +189,7 @@ func Execute(
 			// rm .dvc/config.local.b64
 			fileContentB64 := base64.StdEncoding.EncodeToString([]byte(fileContent))
 			_cmd := fmt.Sprintf("echo \"%s\" > .dvc/config.local.b64 && base64 -d .dvc/config.local.b64 > .dvc/config.local && rm .dvc/config.local.b64", fileContentB64)
-			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+			cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd, "--silent")
 			sendStream("Running Command: ")
 			sendStream("- " + strings.Replace(cmd.String(), fileContentB64, "<base64:***>", -1))
 			if err := readCmdOutput(cmd, sendStream); err != nil {
@@ -204,7 +204,7 @@ func Execute(
 	sendStream("# Find & Execute run.sh ...")
 	sendStream("#===================================")
 	// devpod ssh <workspace-id> --command 'run.sh'
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "chmod +x run.sh && ./run.sh")
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", "chmod +x run.sh && ./run.sh", "--silent")
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
 	if err = readCmdOutput(cmd, sendStream); err != nil {
@@ -239,7 +239,7 @@ func Execute(
 	// devpod ssh <workspace-id> --command 'echo 'http://user:token@host:port' > ~/.git-credentials'
 	// devpod ssh <workspace-id> --command 'git config credential.helper store'
 	_cmd := fmt.Sprintf("echo \"%s\" > ~/.git-credentials && git config credential.helper store", dstBaseUrl)
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd, "--silent")
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
 	if err = readCmdOutput(cmd, sendStream); err != nil {
@@ -251,7 +251,7 @@ func Execute(
 	if remoteMachineIsLocalhost {
 		// devpod ssh <workspace-id> --command "git config url."http://user:token@host.docker.internal:3001/".insteadOf "http://user:token@localhost:3001/""
 		_cmd = fmt.Sprintf("git config url.\"%s\".insteadOf \"%s\"", dstBaseUrl, srcBaseUrl)
-		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+		cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd, "--silent")
 		sendStream("Running Command: ")
 		sendStream("- " + cmd.String())
 		if err = readCmdOutput(cmd, sendStream); err != nil {
@@ -263,7 +263,7 @@ func Execute(
 	// devpod ssh <workspace-id> --command 'git config user.name xxx'
 	// devpod ssh <workspace-id> --command 'git config user.email xxx'
 	_cmd = fmt.Sprintf("git config user.name \"%s\" && git config user.email \"%s\"", gitUser, gitEmail)
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd, "--silent")
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
 	if err = readCmdOutput(cmd, sendStream); err != nil {
@@ -281,7 +281,7 @@ func Execute(
 
 	commitMsg := "exp run result"
 	_cmd = fmt.Sprintf("git add . && git commit -m \"%s\" && git push origin", commitMsg)
-	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd)
+	cmd = exec.Command("devpod", "ssh", workSpaceId, "--command", _cmd, "--silent")
 	sendStream("Running Command: ")
 	sendStream("- " + cmd.String())
 	if err = readCmdOutput(cmd, sendStream); err != nil {
