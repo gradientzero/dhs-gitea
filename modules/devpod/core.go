@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	org_model "code.gitea.io/gitea/models/organization"
@@ -345,28 +346,33 @@ func readCmdOutput(cmd *exec.Cmd, sendStream func(string)) error {
 	}
 
 	// Use goroutines to read stdout and stderr concurrently
+	var wg sync.WaitGroup
 	outputChan := make(chan string)
-	go streamOutput(stdoutPipe, outputChan)
-	go streamOutput(stderrPipe, outputChan)
+
+	wg.Add(2)
+	go streamOutput(stdoutPipe, outputChan, &wg)
+	go streamOutput(stderrPipe, outputChan, &wg)
+
+	go func() {
+		wg.Wait()
+		close(outputChan)
+	}()
 
 	// Read from the channel and send output to the stream function
-	go func() {
-		for output := range outputChan {
-			sendStream(output)
-		}
-	}()
+	for output := range outputChan {
+		sendStream(output)
+	}
 
 	// Wait for the command to finish
 	if err := cmd.Wait(); err != nil {
-		close(outputChan)
 		return fmt.Errorf("command execution failed: %w", err)
 	}
 
-	close(outputChan)
 	return nil
 }
 
-func streamOutput(pipe io.ReadCloser, outputChan chan<- string) {
+func streamOutput(pipe io.ReadCloser, outputChan chan<- string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	scanner := bufio.NewScanner(pipe)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {

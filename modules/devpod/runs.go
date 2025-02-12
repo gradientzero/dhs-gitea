@@ -1,10 +1,12 @@
 package devpod
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -47,17 +49,70 @@ func DeleteRunFile(filename string) error {
 	return nil
 }
 
+type logFileEntry struct {
+	file       *os.File
+	writer     *bufio.Writer
+	closeTimer *time.Timer
+}
+
+var (
+	logFiles       = make(map[string]*logFileEntry)
+	logMutex       sync.Mutex
+	inactivityTime = 10 * time.Second
+)
+
 // LogRunMessageToFile appends a log entry to the run file
 func LogRunMessageToFile(filename, message string) error {
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
+	logMutex.Lock()
+	defer logMutex.Unlock()
+
+	if _, exists := logFiles[filename]; !exists {
+		file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to open log file: %w", err)
+		}
+		logFiles[filename] = &logFileEntry{
+			file:      file,
+			writer:    bufio.NewWriter(file),
+			closeTimer: nil,
+		}
 	}
-	defer file.Close()
+
+	entry := logFiles[filename]
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	_, err = file.WriteString(fmt.Sprintf("[%s] %s\n", timestamp, message))
-	return err
+	line := fmt.Sprintf("[%s] %s\n", timestamp, message)
+	if _, err := entry.writer.WriteString(line); err != nil {
+		return fmt.Errorf("failed to write to log file: %w", err)
+	}
+
+	if err := entry.writer.Flush(); err != nil {
+		return fmt.Errorf("failed to flush buffer: %w", err)
+	}
+
+	if entry.closeTimer != nil {
+		entry.closeTimer.Stop()
+	}
+	entry.closeTimer = time.AfterFunc(inactivityTime, func() {
+		closeLogFile(filename)
+	})
+
+	return nil
+}
+
+func closeLogFile(filename string) {
+	logMutex.Lock()
+	defer logMutex.Unlock()
+
+	entry, exists := logFiles[filename]
+	if !exists {
+		return
+	}
+
+	entry.writer.Flush()
+	entry.file.Close()
+
+	delete(logFiles, filename)
 }
 
 type LogFile struct {
